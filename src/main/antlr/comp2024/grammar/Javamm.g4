@@ -11,22 +11,23 @@ RCURLY : '}' ;
 LPAREN : '(' ;
 RPAREN : ')' ;
 MUL : '*' ;
+DIV : '/' ;
 ADD : '+' ;
+SUB: '-' ;
 
 CLASS : 'class' ;
 INT : 'int' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
 
-INTEGER : [0-9] ;
-ID : [a-zA-Z]+ ;
+INTEGER : '0' | [1-9][0-9]* ;
+ID : [a-zA-Z_$][a-zA-Z_$0-9]* ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
     : classDecl EOF
     ;
-
 
 classDecl
     : CLASS name=ID
@@ -40,7 +41,11 @@ varDecl
     ;
 
 type
-    : name= INT ;
+    : name = INT
+    | name = FLOAT
+    | name = DOUBLE
+    | name = VOID
+    ;
 
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
