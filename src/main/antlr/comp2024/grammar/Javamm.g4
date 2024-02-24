@@ -4,29 +4,32 @@ grammar Javamm;
     package pt.up.fe.comp2024;
 }
 
+LPAREN : '(';
+RPAREN : ')';
+LBRACK : '[';
+RBRACK : ']';
+LCURLY : '{';
+RCURLY : '}';
+COMMA : ',';
+DOT : '.';
+MUL : '*';
+DIV : '/';
+ADD : '+';
+SUB: '-';
+LT : '<';
+LE : '<=';
+GT : '>';
+GE : '>=';
+EQ : '==';
+NE : '!=';
+AND : '&&';
+OR : '||';
+NOT : '!';
 EQUALS : '=';
 SEMI : ';' ;
-LCURLY : '{' ;
-RCURLY : '}' ;
-LPAREN : '(' ;
-RPAREN : ')' ;
-MUL : '*' ;
-DIV : '/' ;
-ADD : '+' ;
-SUB: '-' ;
-LT : '<' ;
-LE : '<=' ;
-GT : '>' ;
-GE : '>=' ;
-EQ : '==' ;
-NE : '!=' ;
-AND : '&&' ;
-OR : '||' ;
-NOT : '!' ;
 NEW : 'new' ;
-LBRACK : '[' ;
-RBRACK : ']' ;
-COMMA : ',' ;
+THIS : 'this' ;
+LENGTH : 'length' ;
 
 
 CLASS : 'class' ;
@@ -80,21 +83,24 @@ stmt
 argmtList: expr (COMMA expr)* #ArgList;
 
 expr
-    : LPAREN expr RPAREN #ParenExpr //Parentheses
-    | NEW INT LBRACK expr RBRACK #NewArrayExpr
+    : LPAREN expr RPAREN #ParenExpr 
+    | NEW INT LBRACK expr RBRACK #SpTypeNewArrayExpr 
     | NEW name=ID LPAREN argmtList? RPAREN #NewObjectExpr
-    | expr op=NOT expr #UnaryExpr //Unary operations
-    | expr op= (MUL | DIV) expr #BinaryExpr // Multiplicative operations
-    | expr op= (ADD | SUB) expr #BinaryExpr //Additive operations
-    | expr op= (LT | LE | GT | GE) expr #BinaryExpr //Relational operations
-    | expr op= (EQ | NE) expr #BinaryExpr //Equality operations
-    | expr op= AND expr #BinaryExpr //Logical operations (AND)
-    | expr op= OR expr #BinaryExpr //Logical operations (OR)
-    | value=INTEGER #IntegerLiteral //
-    | value='true' #BooleanLiteral //
-    | value='false' #BooleanLiteral //
-    | name=ID #VarRefExpr //
+    | expr LBRACK expr RBRACK #ArrayAccessExpr
+    | className=ID expr #classInstanceCreationExpr
+    | expr DOT name=ID LPAREN argmtList? RPAREN #MethodCallExpr
+    | expr DOT LENGTH #ArrayLengthExpr
+    | value=THIS #ThisExpr
+    | op=NOT expr #UnaryExpr 
+    | expr op= (MUL | DIV) expr #BinaryExpr 
+    | expr op= (ADD | SUB) expr #BinaryExpr
+    | expr op= (LT | LE | GT | GE) expr #BinaryExpr
+    | expr op= (EQ | NE) expr #BinaryExpr 
+    | expr op= AND expr #BinaryExpr
+    | expr op= OR expr #BinaryExpr
+    | LBRACK argmtList? RBRACK #UnspTypeNewArrayExpr
+    | value=INTEGER #IntegerLiteral 
+    | value='true' #BooleanLiteral 
+    | value='false' #BooleanLiteral 
+    | name=ID #VarRefExpr 
     ;
-
-
-
