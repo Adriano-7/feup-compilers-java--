@@ -30,10 +30,15 @@ SEMI : ';' ;
 NEW : 'new' ;
 THIS : 'this' ;
 LENGTH : 'length' ;
+TRUE : 'true' ;
+FALSE : 'false' ;
 
 
 CLASS : 'class' ;
 INT : 'int' ;
+FLOAT : 'float' ;
+DOUBLE : 'double' ;
+VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
 
@@ -84,23 +89,22 @@ argmtList: expr (COMMA expr)* #ArgList;
 
 expr
     : LPAREN expr RPAREN #ParenExpr 
-    | NEW INT LBRACK expr RBRACK #SpTypeNewArrayExpr 
     | NEW name=ID LPAREN argmtList? RPAREN #NewObjectExpr
-    | expr LBRACK expr RBRACK #ArrayAccessExpr
-    | className=ID expr #classInstanceCreationExpr
+    | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr 
     | expr DOT name=ID LPAREN argmtList? RPAREN #MethodCallExpr
+    | expr LBRACK expr RBRACK #ArrayAccessExpr
+    | className=ID expr #ClassInstanceCreationExpr
     | expr DOT LENGTH #ArrayLengthExpr
-    | value=THIS #ThisExpr
-    | op=NOT expr #UnaryExpr 
+    | op=NOT expr #UnaryExpr
     | expr op= (MUL | DIV) expr #BinaryExpr 
     | expr op= (ADD | SUB) expr #BinaryExpr
     | expr op= (LT | LE | GT | GE) expr #BinaryExpr
     | expr op= (EQ | NE) expr #BinaryExpr 
     | expr op= AND expr #BinaryExpr
     | expr op= OR expr #BinaryExpr
-    | LBRACK argmtList? RBRACK #UnspTypeNewArrayExpr
-    | value=INTEGER #IntegerLiteral 
-    | value='true' #BooleanLiteral 
-    | value='false' #BooleanLiteral 
-    | name=ID #VarRefExpr 
+    | LBRACK argmtList? RBRACK #UnspecifiedTypeNewArrayExpr 
+    | value=INTEGER #IntegerLiteral
+    | value=(TRUE|FALSE) #BooleanLiteral
+    | name=ID #VarRefExpr
+    | value=THIS #ThisExpr
     ;
