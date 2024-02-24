@@ -14,6 +14,15 @@ MUL : '*' ;
 DIV : '/' ;
 ADD : '+' ;
 SUB: '-' ;
+LT : '<' ;
+LE : '<=' ;
+GT : '>' ;
+GE : '>=' ;
+EQ : '==' ;
+NE : '!=' ;
+AND : '&&' ;
+OR : '||' ;
+NOT : '!' ;
 
 CLASS : 'class' ;
 INT : 'int' ;
@@ -64,9 +73,16 @@ stmt
     ;
 
 expr
-    : expr op= (MUL | DIV) expr #BinaryExpr //
-    | expr op= (ADD | SUB) expr #BinaryExpr //
+    : expr op=NOT expr #UnaryExpr //Unary operations
+    | expr op= (MUL | DIV) expr #BinaryExpr // Multiplicative operations
+    | expr op= (ADD | SUB) expr #BinaryExpr //Additive operations
+    | expr op= (LT | LE | GT | GE) expr #BinaryExpr //Relational operations
+    | expr op= (EQ | NE) expr #BinaryExpr //Equality operations
+    | expr op= AND expr #BinaryExpr //Logical operations (AND)
+    | expr op= OR expr #BinaryExpr //Logical operations (OR)
     | value=INTEGER #IntegerLiteral //
+    | value='true' #BooleanLiteral //
+    | value='false' #BooleanLiteral //
     | name=ID #VarRefExpr //
     ;
 
