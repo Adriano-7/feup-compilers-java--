@@ -64,8 +64,8 @@ stmt
     ;
 
 expr
-    : expr op= MUL expr #BinaryExpr //
-    | expr op= ADD expr #BinaryExpr //
+    : expr op= (MUL | DIV) expr #BinaryExpr //
+    | expr op= (ADD | SUB) expr #BinaryExpr //
     | value=INTEGER #IntegerLiteral //
     | name=ID #VarRefExpr //
     ;
