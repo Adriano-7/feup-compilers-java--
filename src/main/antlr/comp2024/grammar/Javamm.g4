@@ -23,6 +23,11 @@ NE : '!=' ;
 AND : '&&' ;
 OR : '||' ;
 NOT : '!' ;
+NEW : 'new' ;
+LBRACK : '[' ;
+RBRACK : ']' ;
+COMMA : ',' ;
+
 
 CLASS : 'class' ;
 INT : 'int' ;
@@ -72,8 +77,13 @@ stmt
     | RETURN expr SEMI #ReturnStmt
     ;
 
+argmtList: expr (COMMA expr)* #ArgList;
+
 expr
-    : expr op=NOT expr #UnaryExpr //Unary operations
+    : LPAREN expr RPAREN #ParenExpr //Parentheses
+    | NEW INT LBRACK expr RBRACK #NewArrayExpr
+    | NEW name=ID LPAREN argmtList? RPAREN #NewObjectExpr
+    | expr op=NOT expr #UnaryExpr //Unary operations
     | expr op= (MUL | DIV) expr #BinaryExpr // Multiplicative operations
     | expr op= (ADD | SUB) expr #BinaryExpr //Additive operations
     | expr op= (LT | LE | GT | GE) expr #BinaryExpr //Relational operations
