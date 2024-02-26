@@ -4,24 +4,48 @@ grammar Javamm;
     package pt.up.fe.comp2024;
 }
 
+LPAREN : '(';
+RPAREN : ')';
+LBRACK : '[';
+RBRACK : ']';
+LCURLY : '{';
+RCURLY : '}';
+COMMA : ',';
+DOT : '.';
+MUL : '*';
+DIV : '/';
+ADD : '+';
+SUB: '-';
+LT : '<';
+LE : '<=';
+GT : '>';
+GE : '>=';
+EQ : '==';
+NE : '!=';
+AND : '&&';
+OR : '||';
+NOT : '!';
 EQUALS : '=';
 SEMI : ';' ;
-LCURLY : '{' ;
-RCURLY : '}' ;
-LPAREN : '(' ;
-RPAREN : ')' ;
-MUL : '*' ;
-DIV : '/' ;
-ADD : '+' ;
-SUB: '-' ;
+NEW : 'new' ;
+THIS : 'this' ;
+LENGTH : 'length' ;
+TRUE : 'true' ;
+FALSE : 'false' ;
 
 CLASS : 'class' ;
 INT : 'int' ;
+FLOAT : 'float' ;
+DOUBLE : 'double' ;
+VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
 
 INTEGER : '0' | [1-9][0-9]* ;
 ID : [a-zA-Z_$][a-zA-Z_$0-9]* ;
+
+LINE_COMMENT : '//' ~[\r\n]* -> skip ;
+BLOCK_COMMENT : '/*' .*? '*/' -> skip ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -63,12 +87,26 @@ stmt
     | RETURN expr SEMI #ReturnStmt
     ;
 
+argmtList: expr (COMMA expr)* #ArgList;
+
 expr
-    : expr op= MUL expr #BinaryExpr //
-    | expr op= ADD expr #BinaryExpr //
-    | value=INTEGER #IntegerLiteral //
-    | name=ID #VarRefExpr //
+    : LPAREN expr RPAREN #ParenExpr 
+    | NEW name=ID LPAREN argmtList? RPAREN #NewObjectExpr
+    | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr 
+    | expr DOT name=ID LPAREN argmtList? RPAREN #MethodCallExpr
+    | expr LBRACK expr RBRACK #ArrayAccessExpr
+    | className=ID expr #ClassInstanceCreationExpr
+    | expr DOT LENGTH #ArrayLengthExpr
+    | op=NOT expr #UnaryExpr
+    | expr op= (MUL | DIV) expr #BinaryExpr 
+    | expr op= (ADD | SUB) expr #BinaryExpr
+    | expr op= (LT | LE | GT | GE) expr #BinaryExpr
+    | expr op= (EQ | NE) expr #BinaryExpr 
+    | expr op= AND expr #BinaryExpr
+    | expr op= OR expr #BinaryExpr
+    | LBRACK argmtList? RBRACK #UnspecifiedTypeNewArrayExpr 
+    | value=INTEGER #IntegerLiteral
+    | value=(TRUE|FALSE) #BooleanLiteral
+    | name=ID #VarRefExpr
+    | value=THIS #ThisExpr
     ;
-
-
-

@@ -5,6 +5,7 @@
 /.settings/
 /generated/
 /run/
+src/main/antlr/comp2024/grammar/.antlr/
 gradle*
 
 # Class files
