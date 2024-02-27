@@ -26,7 +26,7 @@ AND : '&&';
 OR : '||';
 NOT : '!';
 EQUALS : '=';
-SEMI : ';' ;
+SEMICOL : ';' ;
 NEW : 'new' ;
 THIS : 'this' ;
 LENGTH : 'length' ;
@@ -40,6 +40,9 @@ DOUBLE : 'double' ;
 VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
+IF : 'if' ;
+ELSE : 'else' ;
+WHILE : 'while' ;
 
 INTEGER : '0' | [1-9][0-9]* ;
 ID : [a-zA-Z_$][a-zA-Z_$0-9]* ;
@@ -61,7 +64,7 @@ classDecl
     ;
 
 varDecl
-    : type name=ID SEMI
+    : type name=ID SEMICOL
     ;
 
 type
@@ -83,8 +86,12 @@ param
     ;
 
 stmt
-    : expr EQUALS expr SEMI #AssignStmt //
-    | RETURN expr SEMI #ReturnStmt
+    : LCURLY stmt* RCURLY #BlockStmt
+    | IF LPAREN expr RPAREN stmt ELSE stmt #IfElseStmt
+    | WHILE LPAREN expr RPAREN stmt #WhileStmt
+    | expr SEMICOL #ExprStmt
+    | name=ID EQUALS expr SEMICOL #AssignStmt
+    | name=ID LBRACK expr RBRACK EQUALS expr SEMICOL #ArrayAssignStmt
     ;
 
 argmtList: expr (COMMA expr)* #ArgList;
