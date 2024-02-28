@@ -56,19 +56,23 @@ program
 classDecl
     : CLASS name=ID
         LCURLY
+        varDecl*
         methodDecl*
         RCURLY
     ;
 
 varDecl
     : type name=ID SEMI
+    | type name=ID '=' expr SEMI
     ;
 
 type
-    : name = INT
-    | name = FLOAT
-    | name = DOUBLE
-    | name = VOID
+    : typeName = 'int'
+    | typeName = 'int' '[' ']'
+    | typeName = ID
+    | typeName = ID '[' ']'
+    | typeName = 'boolean'
+    | typeName = 'String'
     ;
 
 methodDecl locals[boolean isPublic=false]
