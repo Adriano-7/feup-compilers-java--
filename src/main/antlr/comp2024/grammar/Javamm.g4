@@ -71,6 +71,7 @@ classDecl
     : CLASS name=ID (EXTENDS extendedClass=ID)?
         LCURLY
         varDecl*
+        mainMethod?
         methodDecl*
         RCURLY
     ;
@@ -81,6 +82,7 @@ varDecl
 
 type
     : typeName = 'int'
+    | 'int' '...'
     | typeName = 'int' '[' ']'
     | typeName = ID
     | typeName = ID '[' ']'
@@ -91,8 +93,9 @@ type
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
-        LPAREN param RPAREN
-        LCURLY varDecl* stmt* RCURLY
+        LPAREN (param (COMMA param)* )? RPAREN
+        LCURLY varDecl* stmt*
+        RETURN expr SEMICOL RCURLY
     ;
 
 mainMethod
@@ -137,3 +140,4 @@ expr
     | name=ID #VarRefExpr
     | value=THIS #ThisExpr
     ;
+
