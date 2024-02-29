@@ -33,8 +33,12 @@ LENGTH : 'length' ;
 TRUE : 'true' ;
 FALSE : 'false' ;
 
+STATIC: 'static';
+IMPORT : 'import';
+EXTENDS : 'extends';
 CLASS : 'class' ;
 INT : 'int' ;
+STRING : 'String';
 FLOAT : 'float' ;
 DOUBLE : 'double' ;
 VOID : 'void' ;
@@ -53,12 +57,17 @@ BLOCK_COMMENT : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
-    : classDecl EOF
+    : importDecl* classDecl EOF
+    ;
+
+importDecl
+    : IMPORT ID('.'ID)* SEMI
     ;
 
 classDecl
-    : CLASS name=ID
+    : CLASS name=ID (EXTENDS extendedClass=ID)?
         LCURLY
+        varDecl*
         methodDecl*
         RCURLY
     ;
@@ -68,16 +77,24 @@ varDecl
     ;
 
 type
-    : name = INT
-    | name = FLOAT
-    | name = DOUBLE
-    | name = VOID
+    : typeName = 'int'
+    | typeName = 'int' '[' ']'
+    | typeName = ID
+    | typeName = ID '[' ']'
+    | typeName = 'boolean'
+    | typeName = 'String'
     ;
 
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN param RPAREN
+        LCURLY varDecl* stmt* RCURLY
+    ;
+
+mainMethod
+    : PUBLIC? STATIC VOID 'main'
+        LPAREN STRING LBRACK RBRACK name=ID RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
 
