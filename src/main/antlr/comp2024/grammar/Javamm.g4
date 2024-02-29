@@ -71,7 +71,6 @@ classDecl
     : CLASS name=ID (EXTENDS extendedClass=ID)?
         LCURLY
         varDecl*
-        mainMethod?
         methodDecl*
         RCURLY
     ;
