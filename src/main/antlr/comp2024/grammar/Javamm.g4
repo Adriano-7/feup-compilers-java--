@@ -61,7 +61,10 @@ program
     ;
 
 importDecl
-    : IMPORT ID('.'ID)* SEMICOL
+    : IMPORT impPackage('.'impPackage)* SEMICOL
+    ;
+impPackage
+    : name=ID
     ;
 
 classDecl
