@@ -38,7 +38,7 @@ IMPORT : 'import';
 EXTENDS : 'extends';
 CLASS : 'class' ;
 INT : 'int' ;
-STRING : 'string';
+STRING : 'String';
 FLOAT : 'float' ;
 DOUBLE : 'double' ;
 VOID : 'void' ;
@@ -80,7 +80,6 @@ type
     | typeName = ID '[' ']'
     | typeName = 'boolean'
     | typeName = 'String'
-    | typeName = 'String' '[' ']'
     ;
 
 methodDecl locals[boolean isPublic=false]
