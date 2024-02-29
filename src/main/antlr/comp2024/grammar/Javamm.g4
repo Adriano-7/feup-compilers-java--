@@ -61,7 +61,7 @@ program
     ;
 
 importDecl
-    : IMPORT ID('.'ID)* SEMI
+    : IMPORT ID('.'ID)* SEMICOL
     ;
 
 classDecl
