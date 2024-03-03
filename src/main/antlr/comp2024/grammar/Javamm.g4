@@ -61,7 +61,7 @@ program
     ;
 
 importDecl
-    : IMPORT impPackage('.'impPackage)* SEMICOL
+    : IMPORT impPackage('.'impPackage)* SEMICOL #ImportStmt
     ;
 impPackage
     : name=ID
@@ -72,7 +72,7 @@ classDecl
         LCURLY
         varDecl*
         methodDecl*
-        RCURLY
+        RCURLY #ClassStmt
     ;
 
 varDecl
@@ -100,10 +100,9 @@ methodDecl locals[boolean isPublic=false]
 
 mainMethod
     : PUBLIC? STATIC VOID 'main'
-        LPAREN STRING LBRACK RBRACK name=ID RPAREN
+        LPAREN STRING LBRACK RBRACK ID RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
-
 
 param
     : type name=ID
