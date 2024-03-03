@@ -95,6 +95,7 @@ methodDecl locals[boolean isPublic=false]
         LPAREN (param (COMMA param)* )? RPAREN
         LCURLY varDecl* stmt*
         RETURN expr SEMICOL RCURLY
+    | mainMethod
     ;
 
 mainMethod
@@ -102,6 +103,7 @@ mainMethod
         LPAREN STRING LBRACK RBRACK name=ID RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
+
 
 param
     : type name=ID

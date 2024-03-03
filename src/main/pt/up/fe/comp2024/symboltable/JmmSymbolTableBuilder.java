@@ -16,10 +16,7 @@ import static pt.up.fe.comp2024.ast.Kind.METHOD_DECL;
 import static pt.up.fe.comp2024.ast.Kind.VAR_DECL;
 
 public class JmmSymbolTableBuilder {
-
-
     public static JmmSymbolTable build(JmmNode root) {
-
         var classDecl = root.getJmmChild(0);
         SpecsCheck.checkArgument(Kind.CLASS_DECL.check(classDecl), () -> "Expected a class declaration: " + classDecl);
         String className = classDecl.get("name");
