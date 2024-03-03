@@ -43,13 +43,18 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
                 builder.fields
         );
     }
+
     @Override
     protected void buildVisitor() {
         setDefaultVisit(this::defaultVisit);
         addVisit("ImportStmt", this::dealWithImport);
         addVisit("ClassStmt", this::dealWithClass);
-        addVisit("varDecl", this::dealWithVarDecl);
-        addVisit("methodDecl", this::dealWithMethodDecl);
+
+        addVisit("MethodDecl", this::dealWithMethodDecl);
+        addVisit("VarDecl", this::dealWithVarDecl);
+
+        addVisit("Param", this::dealWithParam);
+        addVisit("Type", this::defaultWithType);
     }
 
     private String defaultVisit(JmmNode node, String arg) {
@@ -58,9 +63,13 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         }
         return arg;
     }
+
     private String dealWithImport(JmmNode node, String arg) {
         String imp = "";
         for (JmmNode child : node.getChildren()) {
+            if (!imp.isEmpty()) {
+                imp += ".";
+            }
             imp += child.get("name");
         }
         this.imports.add(imp);
@@ -79,35 +88,61 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     }
 
     private String dealWithVarDecl(JmmNode node, String arg) {
-        String type = node.get("type");
         String name = node.get("name");
-        this.fields.add(new Symbol(new Type(type, false), name));
+        JmmNode typeNode = node.getChildren().get(0);
+        String type = typeNode.get("typeName");
+        boolean isArray = typeNode.getKind().equals("Array");
+        this.fields.add(new Symbol(new Type(type, isArray), name));
+        return arg;
+    }
+    private String dealWithMethodDecl(JmmNode node, String arg) {
+        String name = node.hasAttribute("name") ? node.get("name") : "main";
+        this.methods.add(name);
+
+        if(name.equals("main")){
+            this.returnTypes.put(name, new Type("static void", false));
+            //String[] args
+            this.params.put(name, Arrays.asList(new Symbol(new Type("String[]", true), "args")));
+        }
+        else{
+            //First child is the return type
+            JmmNode returnTypeNode = node.getChildren().get(0);
+            String returnType = returnTypeNode.get("typeName");
+            boolean isArray = returnTypeNode.getKind().equals("Array");
+            this.returnTypes.put(name, new Type(returnType, isArray));
+
+            //Then traverse the children to get the parameters and the local variables
+            List<Symbol> parameters = new ArrayList<>();
+            List<Symbol> locals = new ArrayList<>();
+            for (int i = 1; i < node.getNumChildren(); i++) {
+                JmmNode child = node.getChildren().get(i);
+                if (child.getKind().equals("Param")) {
+                    String paramName = child.get("name");
+                    JmmNode paramTypeNode = child.getChildren().get(0);
+                    String paramType = paramTypeNode.get("typeName");
+                    boolean paramIsArray = paramTypeNode.getKind().equals("Array");
+                    parameters.add(new Symbol(new Type(paramType, paramIsArray), paramName));
+                }
+                else if (child.getKind().equals("VarDecl")) {
+                    String localName = child.get("name");
+                    JmmNode localTypeNode = child.getChildren().get(0);
+                    String localType = localTypeNode.get("typeName");
+                    boolean localIsArray = localTypeNode.getKind().equals("Array");
+                    locals.add(new Symbol(new Type(localType, localIsArray), localName));
+                }
+            }
+            this.params.put(name, parameters);
+            this.locals.put(name, locals);
+        }
+
         return arg;
     }
 
-    private String dealWithMethodDecl(JmmNode node, String arg) {
-        if(node.hasAttribute("name")) {
-            methods.add(node.get("name"));
-            returnTypes.put(node.get("name"), new Type(node.get("type"), false));
+    private String defaultWithType(JmmNode node, String arg) {
+        return node.get("typeName");
+    }
 
-            List<Symbol> methodParams = new ArrayList<>();
-            for (JmmNode child : node.getChildren()) {
-                if (child.getKind().equals("param")) {
-                    String paramName = child.get("name");
-                    String paramType = child.get("type");
-                    methodParams.add(new Symbol(new Type(paramType, false), paramName));
-                }
-            }
-            params.put(node.get("name"), methodParams);
-        }
-        else{
-            methods.add("main");
-            List<Symbol> mainParams = new ArrayList<>();
-            mainParams.add(new Symbol(new Type("String", true), "args"));
-            params.put("main", mainParams);
-            returnTypes.put("main", new Type("void", false));
-        }
-
-        return arg;
+    private String dealWithParam(JmmNode node, String arg) {
+        return node.get("name");
     }
 }

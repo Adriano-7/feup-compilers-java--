@@ -94,7 +94,7 @@ methodDecl locals[boolean isPublic=false]
         type name=ID
         LPAREN (param (COMMA param)* )? RPAREN
         LCURLY varDecl* stmt*
-        RETURN expr SEMICOL RCURLY
+        returnStmt RCURLY
     | mainMethod
     ;
 
@@ -102,6 +102,10 @@ mainMethod
     : PUBLIC? STATIC VOID 'main'
         LPAREN STRING LBRACK RBRACK ID RPAREN
         LCURLY varDecl* stmt* RCURLY
+    ;
+
+returnStmt
+    : RETURN expr SEMICOL
     ;
 
 param
@@ -120,21 +124,21 @@ stmt
 argmtList: expr (COMMA expr)* #ArgList;
 
 expr
-    : LPAREN expr RPAREN #ParenExpr 
+    : LPAREN expr RPAREN #ParenExpr
     | NEW name=ID LPAREN argmtList? RPAREN #NewObjectExpr
-    | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr 
+    | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr
     | expr DOT name=ID LPAREN argmtList? RPAREN #MethodCallExpr
     | expr LBRACK expr RBRACK #ArrayAccessExpr
     | className=ID expr #ClassInstanceCreationExpr
     | expr DOT LENGTH #ArrayLengthExpr
     | op=NOT expr #UnaryExpr
-    | expr op= (MUL | DIV) expr #BinaryExpr 
+    | expr op= (MUL | DIV) expr #BinaryExpr
     | expr op= (ADD | SUB) expr #BinaryExpr
     | expr op= (LT | LE | GT | GE) expr #BinaryExpr
-    | expr op= (EQ | NE) expr #BinaryExpr 
+    | expr op= (EQ | NE) expr #BinaryExpr
     | expr op= AND expr #BinaryExpr
     | expr op= OR expr #BinaryExpr
-    | LBRACK argmtList? RBRACK #UnspecifiedTypeNewArrayExpr 
+    | LBRACK argmtList? RBRACK #UnspecifiedTypeNewArrayExpr
     | value=INTEGER #IntegerLiteral
     | value=(TRUE|FALSE) #BooleanLiteral
     | name=ID #VarRefExpr
