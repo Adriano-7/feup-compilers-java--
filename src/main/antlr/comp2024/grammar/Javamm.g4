@@ -17,13 +17,7 @@ DIV : '/';
 ADD : '+';
 SUB: '-';
 LT : '<';
-LE : '<=';
-GT : '>';
-GE : '>=';
-EQ : '==';
-NE : '!=';
 AND : '&&';
-OR : '||';
 NOT : '!';
 EQUALS : '=';
 SEMICOL : ';' ;
@@ -39,8 +33,6 @@ EXTENDS : 'extends';
 CLASS : 'class' ;
 INT : 'int' ;
 STRING : 'String';
-FLOAT : 'float' ;
-DOUBLE : 'double' ;
 VOID : 'void' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
@@ -131,10 +123,8 @@ expr
     | op=NOT expr #UnaryExpr
     | expr op= (MUL | DIV) expr #BinaryExpr
     | expr op= (ADD | SUB) expr #BinaryExpr
-    | expr op= (LT | LE | GT | GE) expr #BinaryExpr
-    | expr op= (EQ | NE) expr #BinaryExpr
+    | expr op=LT expr #BinaryExpr
     | expr op= AND expr #BinaryExpr
-    | expr op= OR expr #BinaryExpr
     | LBRACK argmtList? RBRACK #UnspecifiedTypeNewArrayExpr
     | value=INTEGER #IntegerLiteral
     | value=(TRUE|FALSE) #BooleanLiteral
