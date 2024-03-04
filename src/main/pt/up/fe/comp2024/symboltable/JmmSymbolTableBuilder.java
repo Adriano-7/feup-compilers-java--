@@ -4,21 +4,22 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
-import pt.up.fe.comp2024.ast.Kind;
-import pt.up.fe.comp2024.ast.TypeUtils;
-import pt.up.fe.specs.util.SpecsCheck;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     private String className;
     private String superClass;
-    private List<String> imports;
-    private List<String> methods;
-    private Map<String, List<Symbol>> params;
-    private Map<String, Type> returnTypes;
-    private Map<String, List<Symbol>> locals;
-    private List<Symbol> fields;
+    private final List<String> imports;
+    private final List<String> methods;
+    private final Map<String, List<Symbol>> params;
+    private final Map<String, Type> returnTypes;
+    private final Map<String, List<Symbol>> locals;
+    private final List<Symbol> fields;
 
     public JmmSymbolTableBuilder(){
         this.imports = new ArrayList<>();
@@ -49,10 +50,8 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         setDefaultVisit(this::defaultVisit);
         addVisit("ImportStmt", this::dealWithImport);
         addVisit("ClassStmt", this::dealWithClass);
-
         addVisit("MethodDecl", this::dealWithMethodDecl);
         addVisit("VarDecl", this::dealWithVarDecl);
-
         addVisit("Param", this::dealWithParam);
         addVisit("Type", this::defaultWithType);
     }
@@ -78,9 +77,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
 
     private String dealWithClass(JmmNode node, String arg) {
         this.className = node.get("name");
-        if(node.hasAttribute("extendedClass")){
-            this.superClass = node.get("extendedClass");
-        }
+        this.superClass = node.getOptional("extendedClass").orElse(null);
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
@@ -95,16 +92,16 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         this.fields.add(new Symbol(new Type(type, isArray), name));
         return arg;
     }
+
     private String dealWithMethodDecl(JmmNode node, String arg) {
-        String name = node.hasAttribute("name") ? node.get("name") : "main";
+        String name = node.getOptional("name").orElse("main");
         this.methods.add(name);
 
-        if(name.equals("main")){
-            this.returnTypes.put(name, new Type("static void", false));
+        if (name.equals("main")) {
+            this.returnTypes.put(name, new Type("void", false));
             //String[] args
             this.params.put(name, Arrays.asList(new Symbol(new Type("String[]", true), "args")));
-        }
-        else{
+        } else {
             //First child is the return type
             JmmNode returnTypeNode = node.getChildren().get(0);
             String returnType = returnTypeNode.get("typeName");
@@ -122,8 +119,8 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
                     String paramType = paramTypeNode.get("typeName");
                     boolean paramIsArray = paramTypeNode.getKind().equals("Array");
                     parameters.add(new Symbol(new Type(paramType, paramIsArray), paramName));
-                }
-                else if (child.getKind().equals("VarDecl")) {
+
+                } else if (child.getKind().equals("VarDecl")) {
                     String localName = child.get("name");
                     JmmNode localTypeNode = child.getChildren().get(0);
                     String localType = localTypeNode.get("typeName");

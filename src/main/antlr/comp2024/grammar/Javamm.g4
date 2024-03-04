@@ -95,11 +95,7 @@ methodDecl locals[boolean isPublic=false]
         LPAREN (param (COMMA param)* )? RPAREN
         LCURLY varDecl* stmt*
         returnStmt RCURLY
-    | mainMethod
-    ;
-
-mainMethod
-    : PUBLIC? STATIC VOID 'main'
+    | PUBLIC? STATIC VOID name='main'
         LPAREN STRING LBRACK RBRACK ID RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
