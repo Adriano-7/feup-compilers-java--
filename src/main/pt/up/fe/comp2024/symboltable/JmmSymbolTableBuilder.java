@@ -37,11 +37,11 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
                 builder.imports,
                 builder.className,
                 builder.superClass,
+                builder.fields,
                 builder.methods,
                 builder.returnTypes,
                 builder.params,
-                builder.locals,
-                builder.fields
+                builder.locals
         );
     }
 
