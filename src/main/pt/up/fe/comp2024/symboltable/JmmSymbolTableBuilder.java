@@ -94,7 +94,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMethodDecl(JmmNode node, String arg) {
-        String name = node.getOptional("name").orElse("main");
+        String name = node.get("name");
         this.methods.add(name);
 
         if (name.equals("main")) {
