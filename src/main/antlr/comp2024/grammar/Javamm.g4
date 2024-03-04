@@ -96,7 +96,7 @@ methodDecl locals[boolean isPublic=false]
         LCURLY varDecl* stmt*
         returnStmt RCURLY
     | (PUBLIC {$isPublic=true;})?
-        STATIC VOID name='main'
+        STATIC VOID name=ID
         LPAREN STRING LBRACK RBRACK ID RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
