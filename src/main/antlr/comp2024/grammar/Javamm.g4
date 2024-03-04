@@ -79,14 +79,14 @@ varDecl
     : type name=ID SEMICOL
     ;
 
-type
-    : name = 'int' #value
-    | name = 'int' '...' #array
-    | name = 'int' '[' ']' #array
-    | name = ID #value
-    | name = ID '[' ']' #array
-    | name = 'boolean' #value
-    | name = 'String' #value
+type returns [boolean isArray]
+    : name = 'int'
+    | name = 'int' '...' {$isArray=true;}
+    | name = 'int' '[' ']' {$isArray=true;}
+    | name = ID
+    | name = ID '[' ']' {$isArray=true;}
+    | name = 'boolean'
+    | name = 'String'
     ;
 
 methodDecl locals[boolean isPublic=false]
