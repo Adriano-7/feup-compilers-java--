@@ -80,13 +80,13 @@ varDecl
     ;
 
 type
-    : typeName = 'int'
-    | 'int' '...'
-    | typeName = 'int' '[' ']'
-    | typeName = ID
-    | typeName = ID '[' ']'
-    | typeName = 'boolean'
-    | typeName = 'String'
+    : name = 'int' #value
+    | name = 'int' '...' #array
+    | name = 'int' '[' ']' #array
+    | name = ID #value
+    | name = ID '[' ']' #array
+    | name = 'boolean' #value
+    | name = 'String' #value
     ;
 
 methodDecl locals[boolean isPublic=false]

@@ -87,9 +87,9 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     private String dealWithVarDecl(JmmNode node, String arg) {
         String name = node.get("name");
         JmmNode typeNode = node.getChildren().get(0);
-        String type = typeNode.get("typeName");
+        String typeName = typeNode.get("name");
         boolean isArray = typeNode.getKind().equals("Array");
-        this.fields.add(new Symbol(new Type(type, isArray), name));
+        this.fields.add(new Symbol(new Type(typeName, isArray), name));
         return arg;
     }
 
@@ -104,7 +104,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         } else {
             //First child is the return type
             JmmNode returnTypeNode = node.getChildren().get(0);
-            String returnType = returnTypeNode.get("typeName");
+            String returnType = returnTypeNode.get("name");
             boolean isArray = returnTypeNode.getKind().equals("Array");
             this.returnTypes.put(name, new Type(returnType, isArray));
 
@@ -116,14 +116,14 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
                 if (child.getKind().equals("Param")) {
                     String paramName = child.get("name");
                     JmmNode paramTypeNode = child.getChildren().get(0);
-                    String paramType = paramTypeNode.get("typeName");
+                    String paramType = paramTypeNode.get("name");
                     boolean paramIsArray = paramTypeNode.getKind().equals("Array");
                     parameters.add(new Symbol(new Type(paramType, paramIsArray), paramName));
 
                 } else if (child.getKind().equals("VarDecl")) {
                     String localName = child.get("name");
                     JmmNode localTypeNode = child.getChildren().get(0);
-                    String localType = localTypeNode.get("typeName");
+                    String localType = localTypeNode.get("name");
                     boolean localIsArray = localTypeNode.getKind().equals("Array");
                     locals.add(new Symbol(new Type(localType, localIsArray), localName));
                 }
@@ -136,7 +136,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     }
 
     private String defaultWithType(JmmNode node, String arg) {
-        return node.get("typeName");
+        return node.get("name");
     }
 
     private String dealWithParam(JmmNode node, String arg) {
