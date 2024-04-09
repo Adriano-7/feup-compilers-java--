@@ -99,8 +99,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
 
         if (name.equals("main")) {
             this.returnTypes.put(name, new Type("void", false));
-            //String[] args
-            this.params.put(name, Arrays.asList(new Symbol(new Type("String[]", true), "args")));
+            this.params.put(name, Arrays.asList(new Symbol(new Type("String", true), "args")));
         } else {
             //First child is the return type
             JmmNode returnTypeNode = node.getChildren().get(0);
