@@ -19,9 +19,7 @@ public class JmmAnalysisImpl implements JmmAnalysis {
     private final List<AnalysisPass> analysisPasses;
 
     public JmmAnalysisImpl() {
-
         this.analysisPasses = List.of(new UndeclaredVariable());
-
     }
 
     @Override
