@@ -20,25 +20,23 @@ LT : '<';
 AND : '&&';
 NOT : '!';
 EQUALS : '=';
-SEMICOL : ';' ;
-NEW : 'new' ;
-THIS : 'this' ;
-LENGTH : 'length' ;
-TRUE : 'true' ;
-FALSE : 'false' ;
+SEMICOL : ';';
+NEW : 'new';
+THIS : 'this';
+TRUE : 'true';
+FALSE : 'false';
 
 STATIC: 'static';
 IMPORT : 'import';
 EXTENDS : 'extends';
-CLASS : 'class' ;
-INT : 'int' ;
-STRING : 'String';
-VOID : 'void' ;
-PUBLIC : 'public' ;
-RETURN : 'return' ;
-IF : 'if' ;
-ELSE : 'else' ;
-WHILE : 'while' ;
+CLASS : 'class';
+INT : 'int';
+VOID : 'void';
+PUBLIC : 'public';
+RETURN : 'return';
+IF : 'if';
+ELSE : 'else';
+WHILE : 'while';
 
 INTEGER : '0' | [1-9][0-9]* ;
 ID : [a-zA-Z_$][a-zA-Z_$0-9]* ;
@@ -72,13 +70,13 @@ varDecl
     ;
 
 type returns [boolean isArray]
-    : name = 'int'
-    | name = 'int' '...' {$isArray=true;}
-    | name = 'int' '[' ']' {$isArray=true;}
-    | name = ID
-    | name = ID '[' ']' {$isArray=true;}
-    | name = 'boolean'
-    | name = 'String'
+    : name = 'int' #IntType
+    | name = 'int' '...' {$isArray=true;} #VarArgsType
+    | name = 'int' '[' ']' {$isArray=true;} #IntArrayType
+    | name = ID #IdType
+    | name = ID '[' ']' {$isArray=true;} #IdArrayType
+    | name = 'boolean' #BooleanType
+    | name = 'String' #StringType
     ;
 
 methodDecl locals[boolean isPublic=false]
@@ -86,11 +84,11 @@ methodDecl locals[boolean isPublic=false]
         type name=ID
         LPAREN (param (COMMA param)* )? RPAREN
         LCURLY varDecl* stmt*
-        returnStmt RCURLY
+        returnStmt RCURLY #PublicMethodDecl
     | (PUBLIC {$isPublic=true;})?
         STATIC VOID name=ID
-        LPAREN STRING LBRACK RBRACK ID RPAREN
-        LCURLY varDecl* stmt* RCURLY
+        LPAREN 'String' LBRACK RBRACK ID RPAREN
+        LCURLY varDecl* stmt* RCURLY #PublicStaticVoidMethodDecl
     ;
 
 returnStmt
@@ -119,7 +117,7 @@ expr
     | expr DOT name=ID LPAREN argmtList? RPAREN #MethodCallExpr
     | expr LBRACK expr RBRACK #ArrayAccessExpr
     | className=ID expr #ClassInstanceCreationExpr
-    | expr DOT LENGTH #ArrayLengthExpr
+    | expr DOT 'length' #ArrayLengthExpr
     | op=NOT expr #UnaryExpr
     | expr op= (MUL | DIV) expr #BinaryExpr
     | expr op= (ADD | SUB) expr #BinaryExpr

@@ -21,7 +21,6 @@ public class TypeUtils {
      */
     public static Type getExprType(JmmNode expr, SymbolTable table) {
         // TODO: Simple implementation that needs to be expanded
-
         var kind = Kind.fromString(expr.getKind());
 
         Type type = switch (kind) {
@@ -30,6 +29,10 @@ public class TypeUtils {
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
+
+        if (expr.get("type") == null) {
+            expr.put("type", type.getName() + (type.isArray() ? "[]" : ""));
+        }
 
         return type;
     }
