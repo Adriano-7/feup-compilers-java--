@@ -52,19 +52,14 @@ public class BinaryInvalidExpr extends AnalysisVisitor {
     private boolean checkCompatibility(Type leftType, Type rightType, String operator) {
         String leftTypeName = leftType.getName();
         String rightTypeName = rightType.getName();
-        switch (operator) {
-            case "+":
-                return leftTypeName.equals("int") && rightTypeName.equals("int");
-            case "-":
-                return leftTypeName.equals("int") && rightTypeName.equals("int");
-            case "*":
-                return leftTypeName.equals("int") && rightTypeName.equals("int");
-            case "/":
-                return leftTypeName.equals("int") && rightTypeName.equals("int");
-            case "<":
-                return leftType.equals(rightType);
-            default:
-                return true;
-        }
+        boolean leftIsArray = leftType.isArray();
+        boolean rightIsArray = rightType.isArray();
+
+        return switch (operator) {
+            case "+", "*", "-", "/" ->
+                    leftTypeName.equals("int") && rightTypeName.equals("int") && !leftIsArray && !rightIsArray;
+            case "<" -> leftType.equals(rightType) && !leftIsArray && !rightIsArray;
+            default -> true;
+        };
     }
 }
