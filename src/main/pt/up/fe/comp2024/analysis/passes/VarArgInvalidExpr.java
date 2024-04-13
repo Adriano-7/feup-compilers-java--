@@ -21,3 +21,4 @@ public class VarArgInvalidExpr extends AnalysisVisitor {
     public void buildVisitor() {
     }
 }
+
