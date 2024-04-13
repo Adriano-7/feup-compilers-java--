@@ -23,7 +23,9 @@ public enum Kind {
     SPECIFIC_TYPE_NEW_ARRAY_EXPR,
     UNSPECIFIED_TYPE_NEW_ARRAY_EXPR,
     NEW_OBJECT_EXPR,
-    IMPORT_DECL;
+    IMPORT_DECL,
+    IF_ELSE_STMT,
+    WHILE_STMT;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);
