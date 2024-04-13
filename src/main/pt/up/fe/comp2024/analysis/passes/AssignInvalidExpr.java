@@ -45,14 +45,18 @@ public class AssignInvalidExpr extends AnalysisVisitor {
             return null;
         }
 
-        if (isImported(assigneeType)) {
-            return null;
-        }
-
         //Get the type of the expression
         JmmNode expression = assignStmt.getChildren().get(0);
 
         Type expressionType = TypeUtils.getExprType(expression, table);
+
+        if (isImported(assigneeType, table) && isImported(expressionType, table)) {
+            return null;
+        }
+
+        if (table.getSuper() != null && table.getSuper().equals(assigneeType.getName())) {
+            return null;
+        }
 
         //Check if the types are compatible
         if (!TypeUtils.areTypesAssignable(expressionType, assigneeType)) {

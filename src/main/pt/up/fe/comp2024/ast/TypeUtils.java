@@ -132,8 +132,8 @@ public class TypeUtils {
         return null;
     }
 
-    public static boolean isImported(Type type) {
-        return !(type.getName().equals("int") || type.getName().equals("boolean"));
+    public static boolean isImported(Type type, SymbolTable table) {
+       return table.getImports().contains(type.getName());
     }
 
     /**
