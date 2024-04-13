@@ -31,6 +31,7 @@ public class TypeUtils {
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             case NEW_OBJECT_EXPR -> new Type(expr.get("name"), false);
             case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> getUnspecifiedTypeNewArrayExprType(expr, table);
+            case METHOD_CALL_EXPR -> getMethodCallExprType(expr, table);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
@@ -101,6 +102,34 @@ public class TypeUtils {
     private static Type getUnspecifiedTypeNewArrayExprType(JmmNode unspecifiedTypeNewArrayExpr, SymbolTable table) {
         JmmNode assignStmt = unspecifiedTypeNewArrayExpr.getParent();
         return getVarExprType(assignStmt, table);
+    }
+
+    private static Type getMethodCallExprType(JmmNode methodCallExpr, SymbolTable table) {
+        String methodName = methodCallExpr.get("name");
+        JmmNode parent = methodCallExpr.getParent();
+        while (!parent.getKind().equals("ImportDecl") && !parent.getKind().equals("PublicMethodDecl") && !parent.getKind().equals("PublicStaticVoidMethodDecl")) {
+            parent = parent.getParent();
+        }
+
+        if(!parent.getKind().equals("ImportDecl")) {
+            String methodNameParent = parent.get("name");
+            var method = table.getFields().stream()
+                    .filter(symbol -> symbol.getName().equals(methodName))
+                    .findFirst();
+
+            if (method.isEmpty()) {
+                String superClass = table.getSuper();
+                if (superClass == null || !table.getImports().contains(superClass)) {
+                    return null;
+                    //throw new RuntimeException("Method '" + methodName + "' does not exist and class does not extend an imported class");
+                }
+                return new Type(superClass, false);
+            }
+
+            return method.get().getType();
+        }
+
+        return null;
     }
 
     public static boolean isImported(Type type) {

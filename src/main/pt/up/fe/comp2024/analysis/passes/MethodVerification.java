@@ -15,6 +15,25 @@ import pt.up.fe.specs.util.SpecsCheck;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static pt.up.fe.comp2024.ast.TypeUtils.isImported;
+
+/*
+• When calling methods of the class declared in the code, verify if the types of arguments of the
+call are compatible with the types in the method declaration
+• If the calling method accepts varargs, it can accept both a variable number of arguments of
+the same type as an array, or directly an array
+• In case the method does not exist, verify if the class extends an imported class and report an
+error if it does not.
+    – If the class extends another class, assume the method exists in one of the super classes,
+    and that is being correctly called
+• When calling methods that belong to other classes other than the class declared in the code,
+verify if the classes are being imported.
+    – If a class is being imported,
+    assume the types of the expression where it is used are correct. For instance, for the code
+    bool a; a = M.foo();, if M is an imported class, then assume it has a method named
+    foo without parameters that returns a boolean.
+*/
+
 public class MethodVerification extends AnalysisVisitor {
     @Override
     public void buildVisitor() {
@@ -22,9 +41,15 @@ public class MethodVerification extends AnalysisVisitor {
     }
 
     private Void checkMethodCall(JmmNode expr, SymbolTable table) {
+        JmmNode callerExpr = expr.getChildren().get(0);
         String methodName = expr.get("name");
-        List<JmmNode> arguments = expr.getChildren();
 
+        Type callerType = TypeUtils.getExprType(callerExpr, table);
+        if (callerType != null && table.getImports().contains(callerType.getName())) {
+            return null;
+        }
+
+        List<JmmNode> arguments = expr.getChildren().subList(1, expr.getNumChildren());
         List<Symbol> methods = table.getFields().stream()
                 .filter(symbol -> symbol.getName().equals(methodName))
                 .collect(Collectors.toList());
