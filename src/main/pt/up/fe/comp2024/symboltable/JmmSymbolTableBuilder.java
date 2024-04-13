@@ -4,12 +4,14 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
+import pt.up.fe.comp2024.ast.Kind;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     private String className;
@@ -96,42 +98,41 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     private String dealWithMethodDecl(JmmNode node, String arg) {
         String name = node.get("name");
         this.methods.add(name);
-
+    
         if (name.equals("main")) {
             this.returnTypes.put(name, new Type("void", false));
-            //String[] args
-            this.params.put(name, Arrays.asList(new Symbol(new Type("String[]", true), "args")));
+            this.params.put(name, Arrays.asList(new Symbol(new Type("String", true), "args")));
         } else {
-            //First child is the return type
             JmmNode returnTypeNode = node.getChildren().get(0);
             String returnType = returnTypeNode.get("name");
             boolean isArray = Boolean.parseBoolean(returnTypeNode.get("isArray"));
             this.returnTypes.put(name, new Type(returnType, isArray));
-
-            //Then traverse the children to get the parameters and the local variables
+    
             List<Symbol> parameters = new ArrayList<>();
             List<Symbol> locals = new ArrayList<>();
-            for (int i = 1; i < node.getNumChildren(); i++) {
-                JmmNode child = node.getChildren().get(i);
-                if (child.getKind().equals("Param")) {
-                    String paramName = child.get("name");
-                    JmmNode paramTypeNode = child.getChildren().get(0);
-                    String paramType = paramTypeNode.get("name");
-                    boolean paramIsArray = Boolean.parseBoolean(paramTypeNode.get("isArray"));
-                    parameters.add(new Symbol(new Type(paramType, paramIsArray), paramName));
-
-                } else if (child.getKind().equals("VarDecl")) {
-                    String localName = child.get("name");
-                    JmmNode localTypeNode = child.getChildren().get(0);
-                    String localType = localTypeNode.get("name");
-                    boolean localIsArray = Boolean.parseBoolean(localTypeNode.get("isArray"));
-                    locals.add(new Symbol(new Type(localType, localIsArray), localName));
-                }
+            
+            List<JmmNode> paramNodes = node.getChildren(Kind.PARAM);
+            for (JmmNode child : paramNodes) {
+                String paramName = child.get("name");
+                JmmNode paramTypeNode = child.getChildren().get(0);
+                String paramType = paramTypeNode.get("name");
+                boolean paramIsArray = Boolean.parseBoolean(paramTypeNode.get("isArray"));
+                parameters.add(new Symbol(new Type(paramType, paramIsArray), paramName));
             }
+            
+            List<JmmNode> varDeclNodes = node.getChildren(Kind.VAR_DECL);
+            for (JmmNode child : varDeclNodes) {
+                String localName = child.get("name");
+                JmmNode localTypeNode = child.getChildren().get(0);
+                String localType = localTypeNode.get("name");
+                boolean localIsArray = Boolean.parseBoolean(localTypeNode.get("isArray"));
+                locals.add(new Symbol(new Type(localType, localIsArray), localName));
+            }
+            
             this.params.put(name, parameters);
             this.locals.put(name, locals);
         }
-
+    
         return arg;
     }
     private String defaultWithType(JmmNode node, String arg) {
