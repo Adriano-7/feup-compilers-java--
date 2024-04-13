@@ -51,6 +51,7 @@ public class AssignInvalidExpr extends AnalysisVisitor {
 
         //Get the type of the expression
         JmmNode expression = assignStmt.getChildren().get(0);
+
         Type expressionType = TypeUtils.getExprType(expression, table);
 
         //Check if the types are compatible
@@ -64,7 +65,34 @@ public class AssignInvalidExpr extends AnalysisVisitor {
                     null)
             );
         }
+        else if (expression.getKind().equals("UnspecifiedTypeNewArrayExpr")) {
+            List<JmmNode> children = expression.getChildren();
+            for (JmmNode child : children) {
+                if (!child.getKind().equals("IntegerLiteral")) {
+                    var message = String.format("Array initializer can only have integers");
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(assignStmt),
+                            NodeUtils.getColumn(assignStmt),
+                            message,
+                            null)
+                    );
+                }
+            }
+
+            if (!expressionType.isArray() || !expressionType.getName().equals("int")) {
+                var message = String.format("Type of the assignee (%s) must be an array of integers", assigneeType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null)
+                );
+            }
+        }
 
         return null;
     }
+
 }

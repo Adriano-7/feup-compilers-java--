@@ -24,20 +24,13 @@ public class TypeUtils {
         // TODO: Simple implementation that needs to be expanded
         var kind = Kind.fromString(expr.getKind());
 
-        try {
-            String type = expr.get("type");
-            boolean isArray = expr.get("isArray").equals("true");
-            return new Type(type, isArray);
-        }
-        catch (Exception e) {
-        }
-
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             case NEW_OBJECT_EXPR -> new Type(expr.get("name"), false);
+            case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> getUnspecifiedTypeNewArrayExprType(expr, table);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
@@ -103,6 +96,11 @@ public class TypeUtils {
         }
 
         return null;
+    }
+
+    private static Type getUnspecifiedTypeNewArrayExprType(JmmNode unspecifiedTypeNewArrayExpr, SymbolTable table) {
+        JmmNode assignStmt = unspecifiedTypeNewArrayExpr.getParent();
+        return getVarExprType(assignStmt, table);
     }
 
     public static boolean isImported(Type type) {
