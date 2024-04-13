@@ -9,12 +9,11 @@ import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
-import pt.up.fe.specs.util.SpecsCheck;
 
 /**
- *
- * Checks that array accesses is done over an array and that array access index is an integer
- *
+ Checks if arrays are used correctly.
+ • Array access is done over an array
+ • Array access index is an expression of type integer
  */
 public class ArrayInvalidExpr extends AnalysisVisitor {
     @Override

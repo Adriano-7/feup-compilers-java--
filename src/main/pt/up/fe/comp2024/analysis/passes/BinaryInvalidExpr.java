@@ -12,9 +12,10 @@ import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
 /**
- *
- * Checks if the operands in an expression are compatible with the operation
- *
+ Checks if the operands in an expression are compatible with the operation
+ • Operands of an operation must have types compatible with the operation (e.g. int + boolean
+ is an error because + expects two integers.)
+ • Array cannot be used in arithmetic operations (e.g. array1 + array2 is an error)
  */
 public class BinaryInvalidExpr extends AnalysisVisitor {
     @Override
