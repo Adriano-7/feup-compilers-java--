@@ -22,7 +22,8 @@ public class JmmAnalysisImpl implements JmmAnalysis {
                 new AssignInvalidExpr(),
                 new BinaryInvalidExpr(),
                 new ConditionInvalidExpr(),
-                new UndeclaredVariable()
+                new UndeclaredVariable(),
+                new MethodVerification()
         );
     }
 
