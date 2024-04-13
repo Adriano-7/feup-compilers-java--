@@ -10,12 +10,11 @@ import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
 /**
- * Checks if the type of the expression in a return statement is compatible with the method return type.
- *
- * @author JBispo
+ Checks if the type of the expression in a return statement is compatible with the method return type.
+ • Verify if identifiers used in the code have a corresponding declaration, either as a local variable,
+ a method parameter, a field of the class or an imported class
  */
 public class UndeclaredVariable extends AnalysisVisitor {
-
     private String currentMethod;
 
     @Override
@@ -65,6 +64,4 @@ public class UndeclaredVariable extends AnalysisVisitor {
 
         return null;
     }
-
-
 }

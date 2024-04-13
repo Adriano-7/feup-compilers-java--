@@ -118,7 +118,7 @@ expr
     | expr op= (ADD | SUB) expr #BinaryExpr
     | expr op=LT expr #BinaryExpr
     | expr op= AND expr #BinaryExpr
-    | NEW name=ID LPAREN (expr (COMMA expr)*)? RPAREN #NewObjectExpr
+    | NEW name=ID LPAREN RPAREN #NewObjectExpr
     | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr
     | LBRACK (expr (COMMA expr)*)? RBRACK #UnspecifiedTypeNewArrayExpr
     | value=INTEGER #IntegerLiteral

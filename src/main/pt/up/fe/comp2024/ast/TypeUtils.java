@@ -7,6 +7,7 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 public class TypeUtils {
 
     private static final String INT_TYPE_NAME = "int";
+    private static final String BOOLEAN_TYPE_NAME = "boolean";
 
     public static String getIntTypeName() {
         return INT_TYPE_NAME;
@@ -21,15 +22,24 @@ public class TypeUtils {
      */
     public static Type getExprType(JmmNode expr, SymbolTable table) {
         // TODO: Simple implementation that needs to be expanded
-
         var kind = Kind.fromString(expr.getKind());
 
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
+            case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
+            case NEW_OBJECT_EXPR -> new Type(expr.get("name"), false);
+            case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> getUnspecifiedTypeNewArrayExprType(expr, table);
+            case METHOD_CALL_EXPR -> getMethodCallExprType(expr, table);
+            case SPECIFIC_TYPE_NEW_ARRAY_EXPR -> new Type(INT_TYPE_NAME, true);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
+
+        if (type != null) {
+            expr.put("type", type.getName());
+            expr.put("isArray", type.isArray() ? "true" : "false");
+        }
 
         return type;
     }
@@ -40,18 +50,93 @@ public class TypeUtils {
         String operator = binaryExpr.get("op");
 
         return switch (operator) {
-            case "+", "*" -> new Type(INT_TYPE_NAME, false);
+            case "+", "-", "*", "/" -> new Type(INT_TYPE_NAME, false);
+            case "<", "&&" -> new Type(BOOLEAN_TYPE_NAME, false);
             default ->
                     throw new RuntimeException("Unknown operator '" + operator + "' of expression '" + binaryExpr + "'");
         };
     }
 
+    public static Type getVarExprType(JmmNode varRefExpr, SymbolTable table) {
+        String varName = varRefExpr.get("name");
+        JmmNode parent = varRefExpr.getParent();
+        while (!parent.getKind().equals("ImportDecl") && !parent.getKind().equals("PublicMethodDecl") && !parent.getKind().equals("PublicStaticVoidMethodDecl")) {
+            parent = parent.getParent();
+        }
 
-    private static Type getVarExprType(JmmNode varRefExpr, SymbolTable table) {
-        // TODO: Simple implementation that needs to be expanded
-        return new Type(INT_TYPE_NAME, false);
+        if(!parent.getKind().equals("ImportDecl")) {
+            String methodName = parent.get("name");
+            var localVariable = table.getLocalVariables(methodName).stream()
+                    .filter(varDecl -> varDecl.getName().equals(varName))
+                    .findFirst();
+
+            if (localVariable.isPresent()) {
+                return localVariable.get().getType();
+            }
+
+            var parameter = table.getParameters(methodName).stream()
+                    .filter(param -> param.getName().equals(varName))
+                    .findFirst();
+            if (parameter.isPresent()) {
+                return parameter.get().getType();
+            }
+
+            var field = table.getFields().stream()
+                    .filter(param -> param.getName().equals(varName))
+                    .findFirst();
+            if (field.isPresent()) {
+                return field.get().getType();
+            }
+
+            if((table.getImports() == null || !table.getImports().contains(varName)) && (table.getSuper() == null || !table.getSuper().equals(varName)) && !table.getClassName().equals(varName)) {
+                //throw new RuntimeException("Variable '" + varName + "' not found in method '" + methodName + "'");
+                return null;
+            }
+
+            if(table.getImports() != null && table.getImports().contains(varName)) {
+                return new Type(varName, false);
+            }
+        }
+
+        return null;
     }
 
+    private static Type getUnspecifiedTypeNewArrayExprType(JmmNode unspecifiedTypeNewArrayExpr, SymbolTable table) {
+        JmmNode assignStmt = unspecifiedTypeNewArrayExpr.getParent();
+        return getVarExprType(assignStmt, table);
+    }
+
+    private static Type getMethodCallExprType(JmmNode methodCallExpr, SymbolTable table) {
+        String methodName = methodCallExpr.get("name");
+        JmmNode parent = methodCallExpr.getParent();
+        while (!parent.getKind().equals("ImportDecl") && !parent.getKind().equals("PublicMethodDecl") && !parent.getKind().equals("PublicStaticVoidMethodDecl")) {
+            parent = parent.getParent();
+        }
+
+        if(!parent.getKind().equals("ImportDecl")) {
+            String methodNameParent = parent.get("name");
+            var method = table.getFields().stream()
+                    .filter(symbol -> symbol.getName().equals(methodName))
+                    .findFirst();
+
+            if (method.isEmpty()) {
+                String superClass = table.getSuper();
+                if (superClass == null || !table.getImports().contains(superClass)) {
+                    return null;
+                    //throw new RuntimeException("Method '" + methodName + "' does not exist and class does not extend an imported class");
+                }
+                return new Type(superClass, false);
+            }
+
+            return method.get().getType();
+        }
+
+        return null;
+    }
+
+    public static boolean isImported(Type type, SymbolTable table) {
+       return table.getImports().contains(type.getName());
+    }
 
     /**
      * @param sourceType
@@ -59,7 +144,7 @@ public class TypeUtils {
      * @return true if sourceType can be assigned to destinationType
      */
     public static boolean areTypesAssignable(Type sourceType, Type destinationType) {
-        // TODO: Simple implementation that needs to be expanded
         return sourceType.getName().equals(destinationType.getName());
     }
 }
+
