@@ -26,7 +26,8 @@ public enum Kind {
     IMPORT_DECL,
     IF_ELSE_STMT,
     WHILE_STMT,
-    METHOD_CALL_EXPR;
+    METHOD_CALL_EXPR,
+    THIS_EXPR;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);

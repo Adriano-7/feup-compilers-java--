@@ -32,6 +32,7 @@ public class TypeUtils {
             case NEW_OBJECT_EXPR -> new Type(expr.get("name"), false);
             case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> getUnspecifiedTypeNewArrayExprType(expr, table);
             case METHOD_CALL_EXPR -> getMethodCallExprType(expr, table);
+            case SPECIFIC_TYPE_NEW_ARRAY_EXPR -> new Type(INT_TYPE_NAME, true);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
@@ -88,7 +89,8 @@ public class TypeUtils {
             }
 
             if((table.getImports() == null || !table.getImports().contains(varName)) && (table.getSuper() == null || !table.getSuper().equals(varName)) && !table.getClassName().equals(varName)) {
-                throw new RuntimeException("Variable '" + varName + "' not found in method '" + methodName + "'");
+                //throw new RuntimeException("Variable '" + varName + "' not found in method '" + methodName + "'");
+                return null;
             }
 
             if(table.getImports() != null && table.getImports().contains(varName)) {
