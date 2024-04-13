@@ -108,25 +108,21 @@ stmt
     | name=ID LBRACK expr RBRACK EQUALS expr SEMICOL #ArrayAssignStmt
     ;
 
-argmtList: expr (COMMA expr)* #ArgList;
-
 expr
     : LPAREN expr RPAREN #ParenExpr
-    | NEW name=ID LPAREN argmtList? RPAREN #NewObjectExpr
-    | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr
-    | expr DOT name=ID LPAREN argmtList? RPAREN #MethodCallExpr
     | expr LBRACK expr RBRACK #ArrayAccessExpr
-    | className=ID expr #ClassInstanceCreationExpr
+    | expr DOT name=ID LPAREN (expr (COMMA expr)*)? RPAREN #MethodCallExpr
     | expr DOT 'length' #ArrayLengthExpr
     | op=NOT expr #UnaryExpr
     | expr op= (MUL | DIV) expr #BinaryExpr
     | expr op= (ADD | SUB) expr #BinaryExpr
     | expr op=LT expr #BinaryExpr
     | expr op= AND expr #BinaryExpr
-    | LBRACK argmtList? RBRACK #UnspecifiedTypeNewArrayExpr
+    | NEW name=ID LPAREN (expr (COMMA expr)*)? RPAREN #NewObjectExpr
+    | NEW INT LBRACK expr RBRACK #SpecificTypeNewArrayExpr
+    | LBRACK (expr (COMMA expr)*)? RBRACK #UnspecifiedTypeNewArrayExpr
     | value=INTEGER #IntegerLiteral
     | value=(TRUE|FALSE) #BooleanLiteral
     | name=ID #VarRefExpr
     | value=THIS #ThisExpr
     ;
-

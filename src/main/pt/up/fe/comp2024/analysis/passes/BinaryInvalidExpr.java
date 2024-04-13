@@ -17,8 +17,6 @@ import pt.up.fe.specs.util.SpecsCheck;
  *
  */
 public class BinaryInvalidExpr extends AnalysisVisitor {
-    private String currentMethod;
-
     @Override
     public void buildVisitor() {
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
