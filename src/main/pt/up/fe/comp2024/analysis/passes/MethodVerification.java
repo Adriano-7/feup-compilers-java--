@@ -10,6 +10,7 @@ import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
+import pt.up.fe.comp2024.symboltable.VarargSymbol;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.List;
@@ -63,22 +64,16 @@ public class MethodVerification extends AnalysisVisitor {
             }
             // Method is assumed to exist in the superclass
         } else {
-            List<Type> parameterTypes = table.getParameters(methodName).stream()
-                    .map(Symbol::getType)
-                    .collect(Collectors.toList());
-
-            //Idea: Ir percorrendo a lista de argumentos e vendo se há um parámetro correspondente. Se for o último parâmetro e for varargs, então vamos consumindo os argumentos(int)
+            List<VarargSymbol> parameterSymbols = table.getParameters(methodName).stream().map(VarargSymbol.class::cast).collect(Collectors.toList());
 
             int parameterIndex = 0;
 
             for(int argumentIndex = 0; argumentIndex < arguments.size(); argumentIndex++) {
                 Type argType = TypeUtils.getExprType(arguments.get(argumentIndex), table);
-                Type paramType = parameterTypes.get(parameterIndex);
-                //To be varArg we need to go and try to getOptional("varArg") and check if it is true
+                Type paramType = parameterSymbols.get(parameterIndex).getType();
+                boolean isVarArg = parameterSymbols.get(parameterIndex).isVararg();
 
-                if (TypeUtils.areTypesAssignable(argType, paramType)) {
-                    parameterIndex++;
-                } else if (parameterIndex == parameterTypes.size() - 1 && paramType.getName().equals("int...")) {
+                if (parameterIndex == parameterSymbols.size() - 1 && isVarArg) {
                     // If the parameter is the last one and is varargs, then consume the remaining arguments
                     while (argumentIndex < arguments.size()) {
                         argType = TypeUtils.getExprType(arguments.get(argumentIndex), table);
@@ -88,7 +83,11 @@ public class MethodVerification extends AnalysisVisitor {
                         }
                         argumentIndex++;
                     }
-                } else {
+                }
+                else if (TypeUtils.areTypesAssignable(argType, paramType)) {
+                      parameterIndex++;
+                }
+                else {
                     var message = String.format("Argument at index %d is of type '%s' but method '%s' expects type '%s'", argumentIndex, argType, methodName, paramType);
                     addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(arguments.get(argumentIndex)), NodeUtils.getColumn(arguments.get(argumentIndex)), message, null));
                 }

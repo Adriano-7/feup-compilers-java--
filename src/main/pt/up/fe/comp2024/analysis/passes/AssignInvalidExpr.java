@@ -84,7 +84,7 @@ public class AssignInvalidExpr extends AnalysisVisitor {
                 }
             }
 
-            if (!expressionType.isArray() || !expressionType.getName().equals("int[]")) {
+            if (!expressionType.isArray() || !expressionType.getName().equals("int")) {
                 var message = String.format("Type of the assignee (%s) must be an array of integers", assigneeType);
                 addReport(Report.newError(
                         Stage.SEMANTIC,

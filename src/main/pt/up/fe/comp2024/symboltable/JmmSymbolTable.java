@@ -17,7 +17,7 @@ public class JmmSymbolTable implements SymbolTable {
     private final List<Symbol> fields;
     private final List<String> methods;
     private final Map<String, Type> returnTypes;
-    private final Map<String, List<Symbol>> params;
+    private final Map<String, List<VarargSymbol>> params;
     private final Map<String, List<Symbol>> locals;
 
     public JmmSymbolTable(
@@ -27,7 +27,7 @@ public class JmmSymbolTable implements SymbolTable {
                           List<Symbol> fields,
                           List<String> methods,
                           Map<String, Type> returnTypes,
-                          Map<String, List<Symbol>> params,
+                          Map<String, List<VarargSymbol>> params,
                           Map<String, List<Symbol>> locals
                           ) {
         this.imports = imports;
