@@ -18,7 +18,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     private String superClass;
     private final List<String> imports;
     private final List<String> methods;
-    private final Map<String, List<Symbol>> params;
+    private final Map<String, List<VarargSymbol>> params;
     private final Map<String, Type> returnTypes;
     private final Map<String, List<Symbol>> locals;
     private final List<Symbol> fields;
@@ -90,8 +90,10 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         String name = node.get("name");
         JmmNode typeNode = node.getChildren().get(0);
         String typeName = typeNode.get("name");
+
         boolean isArray = Boolean.parseBoolean(typeNode.get("isArray"));
         this.fields.add(new Symbol(new Type(typeName, isArray), name));
+
         return arg;
     }
 
@@ -101,14 +103,14 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     
         if (name.equals("main")) {
             this.returnTypes.put(name, new Type("void", false));
-            this.params.put(name, Arrays.asList(new Symbol(new Type("String", true), "args")));
+            this.params.put(name, Arrays.asList(new VarargSymbol(new Type("String", true), "args", false)));
         } else {
             JmmNode returnTypeNode = node.getChildren().get(0);
             String returnType = returnTypeNode.get("name");
             boolean isArray = Boolean.parseBoolean(returnTypeNode.get("isArray"));
             this.returnTypes.put(name, new Type(returnType, isArray));
     
-            List<Symbol> parameters = new ArrayList<>();
+            List<VarargSymbol> parameters = new ArrayList<>();
             List<Symbol> locals = new ArrayList<>();
             
             List<JmmNode> paramNodes = node.getChildren(Kind.PARAM);
@@ -117,7 +119,8 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
                 JmmNode paramTypeNode = child.getChildren().get(0);
                 String paramType = paramTypeNode.get("name");
                 boolean paramIsArray = Boolean.parseBoolean(paramTypeNode.get("isArray"));
-                parameters.add(new Symbol(new Type(paramType, paramIsArray), paramName));
+                boolean isVararg = Boolean.parseBoolean(paramTypeNode.get("isVarArg"));
+                parameters.add(new VarargSymbol(new Type(paramType, paramIsArray), paramName, isVararg));
             }
             
             List<JmmNode> varDeclNodes = node.getChildren(Kind.VAR_DECL);

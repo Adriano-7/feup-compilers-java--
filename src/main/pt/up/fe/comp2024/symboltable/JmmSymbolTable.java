@@ -17,7 +17,7 @@ public class JmmSymbolTable implements SymbolTable {
     private final List<Symbol> fields;
     private final List<String> methods;
     private final Map<String, Type> returnTypes;
-    private final Map<String, List<Symbol>> params;
+    private final Map<String, List<VarargSymbol>> params;
     private final Map<String, List<Symbol>> locals;
 
     public JmmSymbolTable(
@@ -27,7 +27,7 @@ public class JmmSymbolTable implements SymbolTable {
                           List<Symbol> fields,
                           List<String> methods,
                           Map<String, Type> returnTypes,
-                          Map<String, List<Symbol>> params,
+                          Map<String, List<VarargSymbol>> params,
                           Map<String, List<Symbol>> locals
                           ) {
         this.imports = imports;
@@ -67,20 +67,16 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public Type getReturnType(String methodSignature) {
-        return returnTypes.get(methodSignature);
+        return returnTypes.getOrDefault(methodSignature, null);
     }
 
     @Override
     public List<Symbol> getParameters(String methodSignature) {
-        return Collections.unmodifiableList(params.get(methodSignature));
+        return Collections.unmodifiableList(params.getOrDefault(methodSignature, Collections.emptyList()));
     }
 
     @Override
     public List<Symbol> getLocalVariables(String methodSignature) {
-        List<Symbol> localVariables = locals.get(methodSignature);
-        if (localVariables == null) {
-            return Collections.emptyList();
-        }
-        return Collections.unmodifiableList(localVariables);
+        return Collections.unmodifiableList(locals.getOrDefault(methodSignature, Collections.emptyList()));
     }
 }

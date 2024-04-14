@@ -4,6 +4,8 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
+import java.util.Optional;
+
 public class TypeUtils {
 
     private static final String INT_TYPE_NAME = "int";
@@ -24,7 +26,12 @@ public class TypeUtils {
         // TODO: Simple implementation that needs to be expanded
         var kind = Kind.fromString(expr.getKind());
 
-        Type type = switch (kind) {
+        Type type = getOptionalType(expr);
+        if(type != null) {
+            return type;
+        }
+
+         type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
@@ -33,6 +40,9 @@ public class TypeUtils {
             case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> getUnspecifiedTypeNewArrayExprType(expr, table);
             case METHOD_CALL_EXPR -> getMethodCallExprType(expr, table);
             case SPECIFIC_TYPE_NEW_ARRAY_EXPR -> new Type(INT_TYPE_NAME, true);
+            case THIS_EXPR -> getThisExprType(expr, table);
+            case ARRAY_ACCESS_EXPR -> new Type(INT_TYPE_NAME, false);
+            case STRING_TYPE -> new Type("String", false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
@@ -106,29 +116,80 @@ public class TypeUtils {
         return getVarExprType(assignStmt, table);
     }
 
+    public static Type getOptionalType(JmmNode node) {
+        Optional<String> type = node.getOptional("type");
+        Optional<String> isArray = node.getOptional("isArray");
+
+        if(type.isEmpty()) {
+            return null;
+        }
+        else if (isArray.isEmpty()) {
+            return new Type(type.get(), false);
+        } else {
+            return new Type(type.get(), Boolean.parseBoolean(isArray.get()));
+
+        }
+    }
+
     private static Type getMethodCallExprType(JmmNode methodCallExpr, SymbolTable table) {
         String methodName = methodCallExpr.get("name");
+        Optional<Type> type = table.getReturnTypeTry(methodName);
+
+        if(type.isPresent()) {
+            return type.get();
+        }
+
         JmmNode parent = methodCallExpr.getParent();
+
+        if(methodCallExpr.getChild(0).getKind().equals("ThisExpr")) {
+            //Scope is the class
+            while (!parent.getKind().equals("ClassStmt")) {
+                parent = parent.getParent();
+            }
+
+            Type methodType = table.getReturnType(methodName);
+            if (methodType == null) {
+                String superClass = table.getSuper();
+                if (superClass == null || !table.getImports().contains(superClass)) {
+                    return null;
+                }
+                return new Type(superClass, false);
+            }
+
+            return methodType;
+        }
+
         while (!parent.getKind().equals("ImportDecl") && !parent.getKind().equals("PublicMethodDecl") && !parent.getKind().equals("PublicStaticVoidMethodDecl")) {
             parent = parent.getParent();
         }
 
         if(!parent.getKind().equals("ImportDecl")) {
             String methodNameParent = parent.get("name");
-            var method = table.getFields().stream()
-                    .filter(symbol -> symbol.getName().equals(methodName))
-                    .findFirst();
+            Type methodType = table.getReturnType(methodName);
 
-            if (method.isEmpty()) {
+            if (methodType == null) {
                 String superClass = table.getSuper();
                 if (superClass == null || !table.getImports().contains(superClass)) {
                     return null;
-                    //throw new RuntimeException("Method '" + methodName + "' does not exist and class does not extend an imported class");
                 }
                 return new Type(superClass, false);
             }
 
-            return method.get().getType();
+            return methodType;
+        }
+
+        return null;
+    }
+
+    private static Type getThisExprType(JmmNode thisExpr, SymbolTable table) {
+        var parent = getMethodCallExprType(thisExpr.getParent(), table);
+
+        if(thisExpr.getParent().getKind().equals("MethodCallExpr")) {
+            return getMethodCallExprType(thisExpr.getParent(), table);
+        }
+
+        if(thisExpr.getParent().getKind().equals("AssignStmt")) {
+            return getVarExprType(thisExpr.getParent(), table);
         }
 
         return null;
@@ -144,7 +205,12 @@ public class TypeUtils {
      * @return true if sourceType can be assigned to destinationType
      */
     public static boolean areTypesAssignable(Type sourceType, Type destinationType) {
+        if(sourceType == null || destinationType == null) {
+            return false;
+        }
+
         return sourceType.getName().equals(destinationType.getName());
     }
+
 }
 
