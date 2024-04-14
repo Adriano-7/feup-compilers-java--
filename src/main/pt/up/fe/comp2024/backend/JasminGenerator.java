@@ -55,11 +55,35 @@ public class JasminGenerator {
     }
 
     private String generatePutField(PutFieldInstruction putFieldInstruction) {
-        return "";
+        var code = new StringBuilder();
+        Operand operand1 = (Operand) putFieldInstruction.getOperands().get(0);
+        Operand operand2 = (Operand) putFieldInstruction.getOperands().get(1);
+        Element element3 = putFieldInstruction.getOperands().get(2);
+
+        code.append(generators.apply(operand1));
+        code.append(generators.apply(element3));
+        ClassType classType = (ClassType) operand1.getType();
+
+        var ollirClassName = ollirResult.getOllirClass().getClassName();
+        code.append("putfield ").append(classType.getName()).append("/").append(operand2.getName()).append(" ");
+        code.append(getDescriptor(element3.getType(), ollirClassName)).append(NL);
+
+        return code.toString();
     }
 
     private String generateGetField(GetFieldInstruction getFieldInstruction) {
-        return "";
+        var code = new StringBuilder();
+        Operand operand1 = (Operand) getFieldInstruction.getOperands().get(0);
+        Operand operand2 = (Operand) getFieldInstruction.getOperands().get(1);
+
+        ClassType classType = (ClassType) operand1.getType();
+        var ollirClassName = ollirResult.getOllirClass().getClassName();
+
+        code.append(generators.apply(operand1));
+        code.append("getfield ").append(classType.getName()).append("/").append(operand2.getName()).append(" ");
+        code.append(getDescriptor(operand2.getType(), ollirClassName)).append(NL);
+
+        return code.toString();
     }
 
 
