@@ -23,7 +23,8 @@ public class JmmAnalysisImpl implements JmmAnalysis {
                 new BinaryInvalidExpr(),
                 new ConditionInvalidExpr(),
                 new UndeclaredVariable(),
-                new MethodVerification()
+                new MethodVerification(),
+                new ReturnInvalidExpr()
         );
     }
 

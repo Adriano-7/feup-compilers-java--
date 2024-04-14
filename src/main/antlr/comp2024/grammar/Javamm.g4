@@ -71,12 +71,10 @@ varDecl
 
 type returns [boolean isArray]
     : name = 'int' #IntType
-    | name = 'int' '...' {$isArray=true;} #VarArgsType
-    | name = 'int' '[' ']' {$isArray=true;} #IntArrayType
-    | name = ID #IdType
-    | name = ID '[' ']' {$isArray=true;} #IdArrayType
+    | name = 'int...' {$isArray=true;} #VarArgsType
+    | name = 'int[]' {$isArray=true;} #IntArrayType
     | name = 'boolean' #BooleanType
-    | name = 'String' #StringType
+    | name = ID #IdType
     ;
 
 methodDecl locals[boolean isPublic=false]

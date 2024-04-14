@@ -45,20 +45,17 @@ public class MethodVerification extends AnalysisVisitor {
         String methodName = expr.get("name");
 
         Type callerType = TypeUtils.getExprType(callerExpr, table);
+        // If the caller type is imported, assume the types of the expression where it is used are correct
         if (callerType != null && table.getImports().contains(callerType.getName())) {
             return null;
         }
 
         List<JmmNode> arguments = expr.getChildren().subList(1, expr.getNumChildren());
-        List<Symbol> methods = table.getFields().stream()
-                .filter(symbol -> symbol.getName().equals(methodName))
-                .collect(Collectors.toList());
 
-        if (methods.isEmpty()) {
+        if (!table.getMethods().contains(methodName)) {
             // Method does not exist, check if the class extends an imported class
             String superClass = table.getSuper();
             if (superClass == null || !table.getImports().contains(superClass)) {
-                // Class does not extend an imported class, report an error
                 var message = String.format("Method '%s' does not exist and class does not extend an imported class", methodName);
 
                 addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(expr), NodeUtils.getColumn(expr), message, null));
@@ -66,23 +63,33 @@ public class MethodVerification extends AnalysisVisitor {
             }
             // Method is assumed to exist in the superclass
         } else {
-            Symbol method = methods.get(0);
-            List<Type> parameterTypes = table.getParameters(method.getName()).stream()
+            List<Type> parameterTypes = table.getParameters(methodName).stream()
                     .map(Symbol::getType)
                     .collect(Collectors.toList());
 
-            if (arguments.size() != parameterTypes.size()) {
-                var message = String.format("Method '%s' expects %d arguments but %d were provided", methodName, parameterTypes.size(), arguments.size());
-                addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(expr), NodeUtils.getColumn(expr), message, null));
-                return null;
-            }
-            for (int i = 0; i < arguments.size(); i++) {
-                Type argType = TypeUtils.getExprType(arguments.get(i), table);
-                Type paramType = parameterTypes.get(i);
+            //Idea: Ir percorrendo a lista de argumentos e vendo se há um parámetro correspondente. Se for o último parâmetro e for varargs, então vamos consumindo os argumentos(int)
 
-                if (!TypeUtils.areTypesAssignable(argType, paramType)) {
-                    var message = String.format("Argument at index %d is of type '%s' but method '%s' expects type '%s'", i, argType, methodName, paramType);
-                    addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(arguments.get(i)), NodeUtils.getColumn(arguments.get(i)), message, null));
+            int parameterIndex = 0;
+
+            for(int argumentIndex = 0; argumentIndex < arguments.size(); argumentIndex++) {
+                Type argType = TypeUtils.getExprType(arguments.get(argumentIndex), table);
+                Type paramType = parameterTypes.get(parameterIndex);
+
+                if (TypeUtils.areTypesAssignable(argType, paramType)) {
+                    parameterIndex++;
+                } else if (parameterIndex == parameterTypes.size() - 1 && paramType.getName().equals("int...")) {
+                    // If the parameter is the last one and is varargs, then consume the remaining arguments
+                    while (argumentIndex < arguments.size()) {
+                        argType = TypeUtils.getExprType(arguments.get(argumentIndex), table);
+                        if (!argType.getName().equals("int")) {
+                            var message = String.format("Argument at index %d is of type '%s' but method '%s' expects type int", argumentIndex, argType, methodName);
+                            addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(arguments.get(argumentIndex)), NodeUtils.getColumn(arguments.get(argumentIndex)), message, null));
+                        }
+                        argumentIndex++;
+                    }
+                } else {
+                    var message = String.format("Argument at index %d is of type '%s' but method '%s' expects type '%s'", argumentIndex, argType, methodName, paramType);
+                    addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(arguments.get(argumentIndex)), NodeUtils.getColumn(arguments.get(argumentIndex)), message, null));
                 }
             }
         }
