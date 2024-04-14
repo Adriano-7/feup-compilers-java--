@@ -41,7 +41,8 @@ public class TypeUtils {
             case METHOD_CALL_EXPR -> getMethodCallExprType(expr, table);
             case SPECIFIC_TYPE_NEW_ARRAY_EXPR -> new Type(INT_TYPE_NAME, true);
             case THIS_EXPR -> getThisExprType(expr, table);
-             case ARRAY_ACCESS_EXPR -> new Type(INT_TYPE_NAME, false);
+            case ARRAY_ACCESS_EXPR -> new Type(INT_TYPE_NAME, false);
+            case STRING_TYPE -> new Type("String", false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 

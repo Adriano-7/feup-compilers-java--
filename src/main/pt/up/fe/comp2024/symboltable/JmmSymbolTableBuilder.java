@@ -90,8 +90,10 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         String name = node.get("name");
         JmmNode typeNode = node.getChildren().get(0);
         String typeName = typeNode.get("name");
+
         boolean isArray = Boolean.parseBoolean(typeNode.get("isArray"));
         this.fields.add(new Symbol(new Type(typeName, isArray), name));
+
         return arg;
     }
 

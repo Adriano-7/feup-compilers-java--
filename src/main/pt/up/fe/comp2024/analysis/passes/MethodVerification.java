@@ -74,6 +74,7 @@ public class MethodVerification extends AnalysisVisitor {
             for(int argumentIndex = 0; argumentIndex < arguments.size(); argumentIndex++) {
                 Type argType = TypeUtils.getExprType(arguments.get(argumentIndex), table);
                 Type paramType = parameterTypes.get(parameterIndex);
+                //To be varArg we need to go and try to getOptional("varArg") and check if it is true
 
                 if (TypeUtils.areTypesAssignable(argType, paramType)) {
                     parameterIndex++;

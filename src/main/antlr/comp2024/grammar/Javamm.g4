@@ -69,11 +69,12 @@ varDecl
     : type name=ID SEMICOL
     ;
 
-type returns [boolean isArray]
+type returns [boolean isArray, boolean isVarArg=false]
     : name = 'int' #IntType
-    | name = 'int...' {$isArray=true;} #VarArgsType
-    | name = 'int[]' {$isArray=true;} #IntArrayType
+    | name = 'int' '...' {$isArray=true; $isVarArg=true;} #VarArgsType
+    | name = 'int' '[' ']' {$isArray=true;} #IntArrayType
     | name = 'boolean' #BooleanType
+    | name = 'String' #StringType
     | name = ID #IdType
     ;
 

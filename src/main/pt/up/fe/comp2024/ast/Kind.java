@@ -27,7 +27,8 @@ public enum Kind {
     IF_ELSE_STMT,
     WHILE_STMT,
     METHOD_CALL_EXPR,
-    THIS_EXPR;
+    THIS_EXPR,
+    STRING_TYPE;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);
