@@ -4,6 +4,8 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
+import java.util.Optional;
+
 public class TypeUtils {
 
     private static final String INT_TYPE_NAME = "int";
@@ -24,7 +26,12 @@ public class TypeUtils {
         // TODO: Simple implementation that needs to be expanded
         var kind = Kind.fromString(expr.getKind());
 
-        Type type = switch (kind) {
+        Type type = getOptionalType(expr);
+        if(type != null) {
+            return type;
+        }
+
+         type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
@@ -106,6 +113,21 @@ public class TypeUtils {
         return getVarExprType(assignStmt, table);
     }
 
+    public static Type getOptionalType(JmmNode node) {
+        Optional<String> type = node.getOptional("type");
+        Optional<String> isArray = node.getOptional("isArray");
+
+        if(type.isEmpty()) {
+            return null;
+        }
+        else if (isArray.isEmpty()) {
+            return new Type(type.get(), false);
+        } else {
+            return new Type(type.get(), Boolean.parseBoolean(isArray.get()));
+
+        }
+    }
+
     private static Type getMethodCallExprType(JmmNode methodCallExpr, SymbolTable table) {
         String methodName = methodCallExpr.get("name");
         JmmNode parent = methodCallExpr.getParent();
@@ -144,6 +166,10 @@ public class TypeUtils {
      * @return true if sourceType can be assigned to destinationType
      */
     public static boolean areTypesAssignable(Type sourceType, Type destinationType) {
+        if(sourceType == null || destinationType == null) {
+            return false;
+        }
+
         return sourceType.getName().equals(destinationType.getName());
     }
 }
