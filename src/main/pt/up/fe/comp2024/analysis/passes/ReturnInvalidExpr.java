@@ -30,6 +30,13 @@ public class ReturnInvalidExpr extends AnalysisVisitor {
 
     private Void visitReturnStmt(JmmNode returnStmt, SymbolTable table) {
         JmmNode expression = returnStmt.getChildren().get(0);
+        if(expression.getKind().equals("MethodCallExpr")){
+            Type methodType = TypeUtils.getExprType(expression.getChild(0), table);
+            if(isImported(methodType, table)){
+                return null;
+            }
+        }
+
 
         JmmNode method = returnStmt.getParent();
         while (!method.getKind().equals("MethodDecl")  && !method.getKind().equals("PublicMethodDecl")) {
