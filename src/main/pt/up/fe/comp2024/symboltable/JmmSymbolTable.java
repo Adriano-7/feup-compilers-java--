@@ -67,16 +67,16 @@ public class JmmSymbolTable implements SymbolTable {
 
     @Override
     public Type getReturnType(String methodSignature) {
-        return returnTypes.get(methodSignature);
+        return returnTypes.getOrDefault(methodSignature, null);
     }
 
     @Override
     public List<Symbol> getParameters(String methodSignature) {
-        return Collections.unmodifiableList(params.get(methodSignature));
+        return Collections.unmodifiableList(params.getOrDefault(methodSignature, Collections.emptyList()));
     }
 
     @Override
     public List<Symbol> getLocalVariables(String methodSignature) {
-        return Collections.unmodifiableList(locals.get(methodSignature));
+        return Collections.unmodifiableList(locals.getOrDefault(methodSignature, Collections.emptyList()));
     }
 }
