@@ -29,14 +29,26 @@ public class OptUtils {
         tempNumber += 1;
         return tempNumber;
     }
-
     public static String toOllirType(JmmNode typeNode) {
-
-        TYPE.checkOrThrow(typeNode);
+        //TYPE.checkOrThrow(typeNode);
 
         String typeName = typeNode.get("name");
+        Optional<Boolean> isArray = typeNode.getOptional("isArray").map(Boolean::parseBoolean);
 
-        return toOllirType(typeName);
+        String type = ".";
+
+        if (!isArray.isEmpty() && isArray.get()) {
+            type += "array.";
+        }
+
+        type += switch (typeName) {
+            case "int" -> "i32";
+            case "boolean" -> "bool";
+            case "String" -> "String";
+            default -> throw new NotImplementedException(typeName);
+        };
+
+        return type;
     }
 
     public static String toOllirType(Type type) {
@@ -47,6 +59,8 @@ public class OptUtils {
 
         String type = "." + switch (typeName) {
             case "int" -> "i32";
+            case "boolean" -> "bool";
+            case "String" -> "String";
             default -> throw new NotImplementedException(typeName);
         };
 
