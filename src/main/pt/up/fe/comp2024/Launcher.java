@@ -41,12 +41,13 @@ public class Launcher {
         JmmSymbolTable symbolTable = symbolTableBuilder.build(parserResult.getRootNode());
         System.out.println(symbolTable.print());
 
-        /*
+
         // Semantic Analysis stage
         JmmAnalysisImpl sema = new JmmAnalysisImpl();
         JmmSemanticsResult semanticsResult = sema.semanticAnalysis(parserResult);
         TestUtils.noErrors(semanticsResult.getReports());
 
+        /*
         // Optimization stage
         JmmOptimizationImpl ollirGen = new JmmOptimizationImpl();
         OllirResult ollirResult = ollirGen.toOllir(semanticsResult);

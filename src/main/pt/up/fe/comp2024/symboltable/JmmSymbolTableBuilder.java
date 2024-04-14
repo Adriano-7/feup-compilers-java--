@@ -104,6 +104,18 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         if (name.equals("main")) {
             this.returnTypes.put(name, new Type("void", false));
             this.params.put(name, Arrays.asList(new VarargSymbol(new Type("String", true), "args", false)));
+            List<Symbol> locals = new ArrayList<>();
+
+            List<JmmNode> varDeclNodes = node.getChildren(Kind.VAR_DECL);
+            for (JmmNode child : varDeclNodes) {
+                String localName = child.get("name");
+                JmmNode localTypeNode = child.getChildren().get(0);
+                String localType = localTypeNode.get("name");
+                boolean localIsArray = Boolean.parseBoolean(localTypeNode.get("isArray"));
+                locals.add(new Symbol(new Type(localType, localIsArray), localName));
+            }
+
+            this.locals.put(name, locals);
         } else {
             JmmNode returnTypeNode = node.getChildren().get(0);
             String returnType = returnTypeNode.get("name");
