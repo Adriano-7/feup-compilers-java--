@@ -50,7 +50,7 @@ public class OptUtils {
             case "int" -> "i32";
             case "boolean" -> "bool";
             case "String" -> "String";
-            default -> throw new NotImplementedException(typeName);
+            default -> typeName;
         };
 
         return type;
@@ -66,7 +66,7 @@ public class OptUtils {
             case "int" -> "i32";
             case "boolean" -> "bool";
             case "String" -> "String";
-            default -> throw new NotImplementedException(typeName);
+            default -> typeName;
         };
 
         return type;

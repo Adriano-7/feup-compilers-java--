@@ -57,6 +57,8 @@ public class MethodVerification extends AnalysisVisitor {
 
         // If the caller type is imported, assume the types of the expression where it is used are correct
         if (callerType != null && table.getImports().contains(callerType.getName())) {
+            expr.put("type", callerType.getName());
+            expr.put("isArray", callerType.isArray() ? "true" : "false");
             return null;
         }
 

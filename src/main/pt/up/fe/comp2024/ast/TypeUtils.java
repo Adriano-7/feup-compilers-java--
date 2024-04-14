@@ -140,9 +140,10 @@ public class TypeUtils {
             return type.get();
         }
 
+        JmmNode methodCaller = methodCallExpr.getChild(0);
         JmmNode parent = methodCallExpr.getParent();
 
-        if(methodCallExpr.getChild(0).getKind().equals("ThisExpr")) {
+        if(methodCaller.getKind().equals("ThisExpr")) {
             //Scope is the class
             while (!parent.getKind().equals("ClassStmt")) {
                 parent = parent.getParent();
@@ -159,6 +160,9 @@ public class TypeUtils {
 
             return methodType;
         }
+        else if(isImported(new Type(methodCaller.get("name"), false), table)) {
+            return new Type(methodCaller.get("name"), false);
+        }
 
         while (!parent.getKind().equals("ImportDecl") && !parent.getKind().equals("PublicMethodDecl") && !parent.getKind().equals("PublicStaticVoidMethodDecl")) {
             parent = parent.getParent();
@@ -169,6 +173,9 @@ public class TypeUtils {
             Type methodType = table.getReturnType(methodName);
 
             if (methodType == null) {
+
+
+
                 String superClass = table.getSuper();
                 if (superClass == null || !table.getImports().contains(superClass)) {
                     return null;
