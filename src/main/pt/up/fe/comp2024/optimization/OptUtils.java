@@ -31,8 +31,13 @@ public class OptUtils {
     }
     public static String toOllirType(JmmNode typeNode) {
         //TYPE.checkOrThrow(typeNode);
-
-        String typeName = typeNode.get("name");
+        String typeName;
+        if(typeNode.getOptional("type").isPresent()) {
+            typeName= typeNode.get("type");
+        }
+        else {
+            typeName = typeNode.get("name");
+        }
         Optional<Boolean> isArray = typeNode.getOptional("isArray").map(Boolean::parseBoolean);
 
         String type = ".";

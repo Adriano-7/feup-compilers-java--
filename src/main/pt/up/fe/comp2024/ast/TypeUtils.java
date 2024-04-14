@@ -43,10 +43,11 @@ public class TypeUtils {
             case THIS_EXPR -> getThisExprType(expr, table);
             case ARRAY_ACCESS_EXPR -> new Type(INT_TYPE_NAME, false);
             case STRING_TYPE -> new Type("String", false);
+            case INT_TYPE -> new Type(INT_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
-        if (type != null) {
+        if (type != null && !expr.getOptional("type").isPresent()) {
             expr.put("type", type.getName());
             expr.put("isArray", type.isArray() ? "true" : "false");
         }

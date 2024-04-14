@@ -77,6 +77,9 @@ public class ReturnInvalidExpr extends AnalysisVisitor {
             );
         }
 
+        returnStmt.put("type", returnType.getName());
+        returnStmt.put("isArray", returnType.isArray() ? "true" : "false");
+
         return null;
     }
 

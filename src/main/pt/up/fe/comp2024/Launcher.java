@@ -48,7 +48,7 @@ public class Launcher {
         TestUtils.noErrors(semanticsResult.getReports());
 
         //Print AST resulting from semantic analysis
-        //System.out.println(semanticsResult.getRootNode().toTree());
+        System.out.println(semanticsResult.getRootNode().toTree());
 
         /*
         // Optimization stage

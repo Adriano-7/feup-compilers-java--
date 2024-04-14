@@ -45,6 +45,9 @@ public class BinaryInvalidExpr extends AnalysisVisitor {
             );
         }
 
+        binaryExpr.put("type", leftType.getName());
+        binaryExpr.put("isArray", leftType.isArray() ? "true" : "false");
+
         return null;
     }
     

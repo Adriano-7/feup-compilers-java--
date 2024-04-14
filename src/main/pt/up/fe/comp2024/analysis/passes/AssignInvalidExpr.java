@@ -33,7 +33,6 @@ public class AssignInvalidExpr extends AnalysisVisitor {
     private Void visitAssignStmt(JmmNode assignStmt, SymbolTable table) {
         //Get the type of the variable in the name
         Type assigneeType = getVarExprType(assignStmt, table);
-
         if(assigneeType == null) {
             addReport(Report.newError(
                     Stage.SEMANTIC,
@@ -44,6 +43,9 @@ public class AssignInvalidExpr extends AnalysisVisitor {
             );
             return null;
         }
+
+        assignStmt.put("type", assigneeType.getName());
+        assignStmt.put("isArray", assigneeType.isArray() ? "true" : "false");
 
         //Get the type of the expression
         JmmNode expression = assignStmt.getChildren().get(0);

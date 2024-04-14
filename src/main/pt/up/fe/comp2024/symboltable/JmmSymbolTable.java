@@ -14,7 +14,7 @@ public class JmmSymbolTable implements SymbolTable {
     private final List<String> imports;
     private final String className;
     private final String superClass;
-    private final List<Symbol> fields;
+    private final List<VarargSymbol> fields;
     private final List<String> methods;
     private final Map<String, Type> returnTypes;
     private final Map<String, List<VarargSymbol>> params;
@@ -24,7 +24,7 @@ public class JmmSymbolTable implements SymbolTable {
                           List<String> imports,
                           String className,
                           String superClass,
-                          List<Symbol> fields,
+                          List<VarargSymbol> fields,
                           List<String> methods,
                           Map<String, Type> returnTypes,
                           Map<String, List<VarargSymbol>> params,

@@ -46,12 +46,19 @@ public class MethodVerification extends AnalysisVisitor {
         String methodName = expr.get("name");
 
         Type callerType = TypeUtils.getExprType(callerExpr, table);
+        List<JmmNode> arguments = expr.getChildren().subList(1, expr.getNumChildren());
+
+        // Annotate arguments
+        for(JmmNode argument : arguments) {
+            Type argType = TypeUtils.getExprType(argument, table);
+            argument.put("type", argType.getName());
+            argument.put("isArray", argType.isArray() ? "true" : "false");
+        }
+
         // If the caller type is imported, assume the types of the expression where it is used are correct
         if (callerType != null && table.getImports().contains(callerType.getName())) {
             return null;
         }
-
-        List<JmmNode> arguments = expr.getChildren().subList(1, expr.getNumChildren());
 
         if (!table.getMethods().contains(methodName)) {
             // Method does not exist, check if the class extends an imported class
@@ -93,6 +100,14 @@ public class MethodVerification extends AnalysisVisitor {
                 }
             }
         }
+
+        if (callerType == null) {
+            addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(callerExpr), NodeUtils.getColumn(callerExpr), "Cannot find the type of the caller", null));
+            return null;
+        }
+
+        expr.put("type", callerType.getName());
+        expr.put("isArray", callerType.isArray() ? "true" : "false");
 
         return null;
     }

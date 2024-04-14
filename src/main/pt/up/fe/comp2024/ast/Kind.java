@@ -11,6 +11,7 @@ public enum Kind {
     CLASS_DECL,
     VAR_DECL,
     TYPE,
+    INT_TYPE,
     METHOD_DECL,
     PARAM,
     ASSIGN_STMT,

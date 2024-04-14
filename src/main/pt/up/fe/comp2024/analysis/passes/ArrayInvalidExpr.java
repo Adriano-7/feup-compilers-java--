@@ -49,6 +49,10 @@ public class ArrayInvalidExpr extends AnalysisVisitor {
                     null)
             );
         }
+
+        binaryExpr.put("type", arrayType.getName());
+        binaryExpr.put("isArray", "true");
+
         return null;
     }
 }

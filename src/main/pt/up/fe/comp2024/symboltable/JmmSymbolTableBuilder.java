@@ -21,7 +21,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     private final Map<String, List<VarargSymbol>> params;
     private final Map<String, Type> returnTypes;
     private final Map<String, List<Symbol>> locals;
-    private final List<Symbol> fields;
+    private final List<VarargSymbol> fields;
 
     public JmmSymbolTableBuilder(){
         this.imports = new ArrayList<>();
@@ -92,7 +92,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
         String typeName = typeNode.get("name");
 
         boolean isArray = Boolean.parseBoolean(typeNode.get("isArray"));
-        this.fields.add(new Symbol(new Type(typeName, isArray), name));
+        this.fields.add(new VarargSymbol(new Type(typeName, isArray), name, false, false));
 
         return arg;
     }
@@ -103,7 +103,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
     
         if (name.equals("main")) {
             this.returnTypes.put(name, new Type("void", false));
-            this.params.put(name, Arrays.asList(new VarargSymbol(new Type("String", true), "args", false)));
+            this.params.put(name, Arrays.asList(new VarargSymbol(new Type("String", true), "args", false, false)));
             List<Symbol> locals = new ArrayList<>();
 
             List<JmmNode> varDeclNodes = node.getChildren(Kind.VAR_DECL);
@@ -132,7 +132,7 @@ public class JmmSymbolTableBuilder extends AJmmVisitor<String, String> {
                 String paramType = paramTypeNode.get("name");
                 boolean paramIsArray = Boolean.parseBoolean(paramTypeNode.get("isArray"));
                 boolean isVararg = Boolean.parseBoolean(paramTypeNode.get("isVarArg"));
-                parameters.add(new VarargSymbol(new Type(paramType, paramIsArray), paramName, isVararg));
+                parameters.add(new VarargSymbol(new Type(paramType, paramIsArray), paramName, isVararg, false));
             }
             
             List<JmmNode> varDeclNodes = node.getChildren(Kind.VAR_DECL);
