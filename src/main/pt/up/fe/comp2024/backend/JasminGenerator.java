@@ -50,7 +50,18 @@ public class JasminGenerator {
         generators.put(Operand.class, this::generateOperand);
         generators.put(BinaryOpInstruction.class, this::generateBinaryOp);
         generators.put(ReturnInstruction.class, this::generateReturn);
+        generators.put(PutFieldInstruction.class, this::generatePutField);
+        generators.put(GetFieldInstruction.class, this::generateGetField);
     }
+
+    private String generatePutField(PutFieldInstruction putFieldInstruction) {
+        return "";
+    }
+
+    private String generateGetField(GetFieldInstruction getFieldInstruction) {
+        return "";
+    }
+
 
     public List<Report> getReports() {
         return reports;
@@ -110,7 +121,6 @@ public class JasminGenerator {
         var className = ollirResult.getOllirClass().getClassName();
         code.append(".class ").append(className).append(NL).append(NL);
 
-        // TODO: Hardcoded to Object, needs to be expanded
         if (ollirClass.getSuperClass() == null){
             code.append(".super java/lang/Object").append(NL);
         } else {
@@ -135,7 +145,9 @@ public class JasminGenerator {
                     return
                 .end method
                 """;
-        code.append(defaultConstructor);
+
+        if (ollirClass.getSuperClass() == null)
+            code.append(defaultConstructor);
 
         // generate code for all other methods
         for (var method : ollirResult.getOllirClass().getMethods()) {
@@ -177,8 +189,6 @@ public class JasminGenerator {
         if (method.isStaticMethod())
             tmp.append("static ");
 
-
-        // TODO: Hardcoded param types and return type, needs to be expanded
         code.append("\n.method ").append(tmp).append(methodName).append("(");
 
         for (Element param : method.getParams()) {
@@ -230,9 +240,6 @@ public class JasminGenerator {
         }else{
             code.append(getPrefix(operand.getType())).append("store").append(reg).append(NL);
         }
-
-//        // TODO: Hardcoded for int type, needs to be expanded
-//        code.append("istore ").append(reg).append(NL);
 
         return code.toString();
     }
@@ -291,7 +298,6 @@ public class JasminGenerator {
     private String generateReturn(ReturnInstruction returnInst) {
         var code = new StringBuilder();
 
-        // TODO: Hardcoded to int return type, needs to be expanded
         if (returnInst.hasReturnValue()){
             code.append(generators.apply(returnInst.getOperand()));
         } else {
