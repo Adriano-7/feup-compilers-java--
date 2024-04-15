@@ -52,6 +52,31 @@ public class JasminGenerator {
         generators.put(ReturnInstruction.class, this::generateReturn);
         generators.put(PutFieldInstruction.class, this::generatePutField);
         generators.put(GetFieldInstruction.class, this::generateGetField);
+        generators.put(CallInstruction.class, this::generateCall);
+    }
+
+    private String generateCall(CallInstruction callInstruction) {
+        var code = new StringBuilder();
+
+        if (callInstruction.getInvocationType().equals(CallType.invokespecial)) {
+            Operand operand1 = (Operand) callInstruction.getOperands().get(0);
+            code.append(generators.apply(operand1));
+
+            if (operand1.getName().equals("this"))
+                code.append("invokespecial java/lang/Object/<init>()V").append(NL);
+            else {
+                ClassType classType = (ClassType) operand1.getType();
+                code.append("invokespecial ").append(classType.getName()).append("/<init>()V").append(NL);
+                code.append("pop").append(NL);
+            }
+
+        } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
+            Operand operand1 = (Operand) callInstruction.getOperands().get(0);
+            code.append("new ").append(operand1.getName()).append(NL);
+            code.append("dup").append(NL);
+        }
+
+        return code.toString();
     }
 
     private String generatePutField(PutFieldInstruction putFieldInstruction) {
