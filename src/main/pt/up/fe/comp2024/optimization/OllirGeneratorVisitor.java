@@ -160,12 +160,13 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         // type
         String retType = "";
-        if (node.getNumChildren() > 0) {
-            retType = toOllirType(node.getJmmChild(0));
-        }
         if (name.equals("main")) {
             retType = ".V";
         }
+        else if (node.getNumChildren() > 0) {
+            retType = toOllirType(node.getJmmChild(0));
+        }
+
         code.append(retType);
         code.append(L_BRACKET);
 
