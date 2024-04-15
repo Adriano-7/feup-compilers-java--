@@ -9,7 +9,9 @@ import pt.up.fe.specs.util.exceptions.NotImplementedException;
 import pt.up.fe.specs.util.utilities.StringLines;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +50,67 @@ public class JasminGenerator {
         generators.put(Operand.class, this::generateOperand);
         generators.put(BinaryOpInstruction.class, this::generateBinaryOp);
         generators.put(ReturnInstruction.class, this::generateReturn);
+        generators.put(PutFieldInstruction.class, this::generatePutField);
+        generators.put(GetFieldInstruction.class, this::generateGetField);
+        generators.put(CallInstruction.class, this::generateCall);
     }
+
+    private String generateCall(CallInstruction callInstruction) {
+        var code = new StringBuilder();
+
+        if (callInstruction.getInvocationType().equals(CallType.invokespecial)) {
+            Operand operand1 = (Operand) callInstruction.getOperands().get(0);
+            code.append(generators.apply(operand1));
+
+            if (operand1.getName().equals("this"))
+                code.append("invokespecial java/lang/Object/<init>()V").append(NL);
+            else {
+                ClassType classType = (ClassType) operand1.getType();
+                code.append("invokespecial ").append(classType.getName()).append("/<init>()V").append(NL);
+                code.append("pop").append(NL);
+            }
+
+        } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
+            Operand operand1 = (Operand) callInstruction.getOperands().get(0);
+            code.append("new ").append(operand1.getName()).append(NL);
+            code.append("dup").append(NL);
+        }
+
+        return code.toString();
+    }
+
+    private String generatePutField(PutFieldInstruction putFieldInstruction) {
+        var code = new StringBuilder();
+        Operand operand1 = (Operand) putFieldInstruction.getOperands().get(0);
+        Operand operand2 = (Operand) putFieldInstruction.getOperands().get(1);
+        Element element3 = putFieldInstruction.getOperands().get(2);
+
+        code.append(generators.apply(operand1));
+        code.append(generators.apply(element3));
+        ClassType classType = (ClassType) operand1.getType();
+
+        var ollirClassName = ollirResult.getOllirClass().getClassName();
+        code.append("putfield ").append(classType.getName()).append("/").append(operand2.getName()).append(" ");
+        code.append(getDescriptor(element3.getType(), ollirClassName)).append(NL);
+
+        return code.toString();
+    }
+
+    private String generateGetField(GetFieldInstruction getFieldInstruction) {
+        var code = new StringBuilder();
+        Operand operand1 = (Operand) getFieldInstruction.getOperands().get(0);
+        Operand operand2 = (Operand) getFieldInstruction.getOperands().get(1);
+
+        ClassType classType = (ClassType) operand1.getType();
+        var ollirClassName = ollirResult.getOllirClass().getClassName();
+
+        code.append(generators.apply(operand1));
+        code.append("getfield ").append(classType.getName()).append("/").append(operand2.getName()).append(" ");
+        code.append(getDescriptor(operand2.getType(), ollirClassName)).append(NL);
+
+        return code.toString();
+    }
+
 
     public List<Report> getReports() {
         return reports;
@@ -64,17 +126,64 @@ public class JasminGenerator {
         return code;
     }
 
+    private StringBuilder getDescriptor(Type type, String className) {
+        var ret = new StringBuilder();
+        if (type.getTypeOfElement().equals(ElementType.INT32))
+            ret.append("I");
+        else if (type.getTypeOfElement().equals(ElementType.BOOLEAN))
+            ret.append("Z");
+        else if (type.getTypeOfElement().equals(ElementType.VOID))
+            ret.append("V");
+        else if (type.getTypeOfElement().equals(ElementType.STRING))
+            ret.append("Ljava/lang/String;");
+        else if (type.getTypeOfElement().equals(ElementType.CLASS))
+            ret.append("Ljava/lang/Class;");
+        else if (type.getTypeOfElement().equals(ElementType.ARRAYREF)) {
+            ArrayType array = (ArrayType) type;
+            ret.append("[").append(getDescriptor(array.getElementType(), className));
+        }
+        else if (type.getTypeOfElement().equals(ElementType.THIS))
+            ret.append("L").append(className).append(";");
+        else if (type.getTypeOfElement().equals(ElementType.OBJECTREF)) {
+            ClassType classType = (ClassType) type;
+            ret.append("L").append(classType.getName()).append(";");
+        }
+        return ret;
+    }
+
+    private String getPrefix(Type type) {
+        if (type.getTypeOfElement().equals(ElementType.INT32) || type.getTypeOfElement().equals(ElementType.BOOLEAN)) {
+            return "i";
+        }
+        else {
+            return "a";
+        }
+
+    }
 
     private String generateClassUnit(ClassUnit classUnit) {
 
         var code = new StringBuilder();
 
         // generate class name
+        ClassUnit ollirClass = ollirResult.getOllirClass();
         var className = ollirResult.getOllirClass().getClassName();
         code.append(".class ").append(className).append(NL).append(NL);
 
-        // TODO: Hardcoded to Object, needs to be expanded
-        code.append(".super java/lang/Object").append(NL);
+        if (ollirClass.getSuperClass() == null){
+            code.append(".super java/lang/Object").append(NL);
+        } else {
+            code.append(".super ").append(ollirClass.getSuperClass()).append(NL);
+        }
+
+        // generate fields
+        code.append(NL);
+        for (Field field : ollirClass.getFields()) {
+            String modifier = field.getFieldAccessModifier().name().equals("DEFAULT")?"":field.getFieldAccessModifier().name().toLowerCase() + " ";
+            code.append(".field ").append(modifier).append(field.getFieldName());
+            code.append(" ").append(getDescriptor(field.getFieldType(), ollirClass.getClassName())).append(NL);
+        }
+        code.append(NL);
 
         // generate a single constructor method
         var defaultConstructor = """
@@ -85,7 +194,9 @@ public class JasminGenerator {
                     return
                 .end method
                 """;
-        code.append(defaultConstructor);
+
+        if (ollirClass.getSuperClass() == null)
+            code.append(defaultConstructor);
 
         // generate code for all other methods
         for (var method : ollirResult.getOllirClass().getMethods()) {
@@ -118,8 +229,23 @@ public class JasminGenerator {
 
         var methodName = method.getMethodName();
 
-        // TODO: Hardcoded param types and return type, needs to be expanded
-        code.append("\n.method ").append(modifier).append(methodName).append("(I)I").append(NL);
+        var tmp = new StringBuilder();
+        if (method.isFinalMethod())
+            tmp.append("final ");
+
+        tmp.append(modifier);
+
+        if (method.isStaticMethod())
+            tmp.append("static ");
+
+        code.append("\n.method ").append(tmp).append(methodName).append("(");
+
+        for (Element param : method.getParams()) {
+            tmp = getDescriptor(param.getType(), ollirResult.getOllirClass().getClassName());
+            code.append(tmp);
+        }
+
+        code.append(")").append(getDescriptor(method.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
 
         // Add limits
         code.append(TAB).append(".limit stack 99").append(NL);
@@ -158,8 +284,11 @@ public class JasminGenerator {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
 
-        // TODO: Hardcoded for int type, needs to be expanded
-        code.append("istore ").append(reg).append(NL);
+        if (reg < 4){
+            code.append(getPrefix(operand.getType())).append("store_").append(reg).append(NL);
+        }else{
+            code.append(getPrefix(operand.getType())).append("store").append(reg).append(NL);
+        }
 
         return code.toString();
     }
@@ -169,13 +298,31 @@ public class JasminGenerator {
     }
 
     private String generateLiteral(LiteralElement literal) {
-        return "ldc " + literal.getLiteral() + NL;
+        if (literal.getType().getTypeOfElement().equals(ElementType.INT32) || literal.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
+            int val = Integer.parseInt(literal.getLiteral());
+
+            if (val > -2 && val < 6){
+                return "iconst_" + literal.getLiteral() + NL;
+
+            }
+            else if (val > -129 && val < 128)
+                return "bipush " + literal.getLiteral() + NL;
+            else if (val > -32769 && val < 32768)
+                return "sipush " + literal.getLiteral() + NL;
+            else
+                return "ldc " + literal.getLiteral() + NL;
+        }
+        else
+            return "ldc \"" + literal.getLiteral() + "\"\n";
     }
 
     private String generateOperand(Operand operand) {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-        return "iload " + reg + NL;
+        if (reg < 4)
+            return getPrefix(operand.getType()) + "load_" + reg + "\n";
+        else
+            return getPrefix(operand.getType()) + "load " + reg + "\n";
     }
 
     private String generateBinaryOp(BinaryOpInstruction binaryOp) {
@@ -200,10 +347,17 @@ public class JasminGenerator {
     private String generateReturn(ReturnInstruction returnInst) {
         var code = new StringBuilder();
 
-        // TODO: Hardcoded to int return type, needs to be expanded
+        if (returnInst.hasReturnValue()){
+            code.append(generators.apply(returnInst.getOperand()));
+        } else {
+            code.append("return").append(NL);
+            return code.toString();
+        }
 
-        code.append(generators.apply(returnInst.getOperand()));
-        code.append("ireturn").append(NL);
+        if (returnInst.getReturnType().getTypeOfElement().equals(ElementType.INT32) || returnInst.getReturnType().getTypeOfElement().equals(ElementType.BOOLEAN))
+            code.append("ireturn").append(NL);
+        else
+            code.append("areturn").append(NL);
 
         return code.toString();
     }
