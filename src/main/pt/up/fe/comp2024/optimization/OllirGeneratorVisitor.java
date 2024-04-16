@@ -67,9 +67,11 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         // code to compute self
         // statement has type of rhs
         Type thisType = TypeUtils.getExprType(node.getJmmChild(0), table);
+        System.out.println("visitAssignStmt1");
         String typeString = toOllirType(thisType);
 
         // Get the type of the lhs variable
+        System.out.println("visitAssignStmt2");
         String lhsType = toOllirType(node);
 
         code.append(varName);
@@ -91,6 +93,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         if(retType.getName().equals("boolean")) {
             Type ah = new Type("bool", false);
         }
+        System.out.println("visitReturn");
         String typeString = toOllirType(retType);
 
         StringBuilder code = new StringBuilder();
@@ -113,6 +116,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     }
 
     private String visitParam(JmmNode node, Void unused) {
+        System.out.println("visitParam");
         var typeCode = toOllirType(node.getJmmChild(0));
         var id = node.get("name");
 
@@ -145,7 +149,9 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         List<Symbol> parameters = table.getParameters(name);
         for (Symbol parameter : parameters) {
             String paramName = parameter.getName();
+            System.out.println("visitMethodDecl1");
             String paramType = toOllirType(parameter.getType());
+            System.out.println("param type: "+ paramType);
             if (parameter.getType().isArray()) {
                 paramType = ".array" + paramType;
             }
@@ -160,23 +166,36 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         // type
         String retType = "";
-        if (node.getNumChildren() > 0) {
-            retType = toOllirType(node.getJmmChild(0));
-        }
         if (name.equals("main")) {
             retType = ".V";
+        }else if (node.getNumChildren() > 0) {
+            System.out.println("visitMethodDecl2");
+            System.out.println("node inside method decl: " + node.getJmmChild(0));
+            retType = toOllirType(node.getJmmChild(0));
+            System.out.println("ret type: "+ retType);
         }
+
         code.append(retType);
         code.append(L_BRACKET);
 
         // rest of its children stmts
         int numParams = table.getParameters(name).size(); // Use symbol table to get number of parameters
-        if(node.getNumChildren() > numParams) {
-            var children = node.getChildren().subList(numParams+1, node.getNumChildren());
-            for (var child : children) {
+        System.out.println("params: " + table.getParameters(name));
+        System.out.println("children: " + node.getChildren());
+
+        if (name.equals("main")){
+            for (var child : node.getChildren()) {
                 code.append(visit(child));
             }
+        } else {
+            if(node.getNumChildren() > numParams) {
+                var children = node.getChildren().subList(numParams+1, node.getNumChildren());
+                for (var child : children) {
+                    code.append(visit(child));
+                }
+            }
         }
+
 
         if (name.equals("main")) {
             code.append("ret.V;\n");
@@ -199,9 +218,9 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
             code.append(" extends ");
             code.append(superClass);
         }
-        else {
-            code.append(" extends Object");
-        }
+//        else {
+//            code.append(" extends Object");
+//        }
 
         code.append(L_BRACKET);
         code.append(NL);
@@ -209,6 +228,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         // Generate fields
         for (Symbol field : table.getFields()) {
             String fieldName = field.getName();
+            System.out.println("visitClass");
             String fieldType = toOllirType(field.getType());
             if (field.getType().isArray()) {
                 fieldType = "array" + fieldType;
@@ -279,9 +299,11 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append(node.get("type")); // Assuming the class name is stored in the node
         code.append(", \"");
         code.append(methodName);
-        code.append("\", ");
+        code.append("\"");
         for (int i = 0; i < arguments.size(); i++) {
+            code.append(", ");
             code.append(arguments.get(i).get("name"));
+            System.out.println("visitMethodCallExpr");
             code.append(toOllirType(arguments.get(i)));
             if (i < arguments.size() - 1) {
                 code.append(", ");

@@ -69,7 +69,21 @@ public class JasminGenerator {
                 code.append("invokespecial ").append(classType.getName()).append("/<init>()V").append(NL);
                 code.append("pop").append(NL);
             }
+        } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
+            Operand arg1 = (Operand) callInstruction.getOperands().get(0);
+            LiteralElement arg2 = (LiteralElement) callInstruction.getOperands().get(1);
 
+            code.append("invokestatic ");
+            code.append(arg1.getName()).append("/").append(arg2.getLiteral().replace("\"", ""));
+            code.append("(");
+
+            for (Element element : callInstruction.getArguments()) {
+                code.append(generators.apply(element));
+                code.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
+            }
+            code.append(")");
+            code.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName()));
+            code.append(NL);
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand operand1 = (Operand) callInstruction.getOperands().get(0);
             code.append("new ").append(operand1.getName()).append(NL);

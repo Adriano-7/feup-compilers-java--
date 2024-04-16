@@ -32,6 +32,8 @@ public class OptUtils {
     public static String toOllirType(JmmNode typeNode) {
         //TYPE.checkOrThrow(typeNode);
         String typeName;
+
+        System.out.println(typeNode);
         if(typeNode.getOptional("type").isPresent()) {
             typeName= typeNode.get("type");
         }
