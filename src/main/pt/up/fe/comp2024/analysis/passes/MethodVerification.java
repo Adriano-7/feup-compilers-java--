@@ -93,7 +93,7 @@ public class MethodVerification extends AnalysisVisitor {
                         argumentIndex++;
                     }
                 }
-                else if (TypeUtils.areTypesAssignable(argType, paramType)) {
+                else if (TypeUtils.areTypesAssignable(argType, paramType, table)) {
                       parameterIndex++;
                 }
                 else {

@@ -52,16 +52,8 @@ public class AssignInvalidExpr extends AnalysisVisitor {
 
         Type expressionType = TypeUtils.getExprType(expression, table);
 
-        if (isImported(assigneeType, table) && isImported(expressionType, table)) {
-            return null;
-        }
-
-        if (table.getSuper() != null && table.getSuper().equals(assigneeType.getName())) {
-            return null;
-        }
-
         //Check if the types are compatible
-        if (!TypeUtils.areTypesAssignable(expressionType, assigneeType)) {
+        if (!TypeUtils.areTypesAssignable(expressionType, assigneeType, table)) {
             var message = String.format("Type of the assignee (%s) must be compatible with the assigned (%s)", assigneeType, expressionType);
             addReport(Report.newError(
                     Stage.SEMANTIC,

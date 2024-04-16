@@ -3,6 +3,7 @@ package pt.up.fe.comp2024.ast;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
+import pt.up.fe.comp2024.symboltable.JmmSymbolTable;
 
 import java.util.Optional;
 
@@ -212,13 +213,33 @@ public class TypeUtils {
      * @param destinationType
      * @return true if sourceType can be assigned to destinationType
      */
-    public static boolean areTypesAssignable(Type sourceType, Type destinationType) {
+    public static boolean areTypesAssignable(Type sourceType, Type destinationType, SymbolTable table) {
         if(sourceType == null || destinationType == null) {
             return false;
         }
 
-        return sourceType.getName().equals(destinationType.getName());
-    }
+        // Check if the types are the same
+        if (sourceType.getName().equals(destinationType.getName())) {
+            return true;
+        }
 
-}
+        String superClass = table.getSuper();
+        if (superClass != null && superClass.equals(destinationType.getName())) {
+            return true;
+        }
+
+        //If destinationType is imported and sourceType is an object of the class that does not extend the imported class return false
+        if ((isImported(destinationType, table) && (sourceType.getName().equals(table.getClassName())
+                && (superClass==null || !superClass.equals(destinationType.getName()))
+        ))) {
+            return false;
+        }
+
+        if (isImported(sourceType, table) || isImported(destinationType, table)) {
+            return true;
+        }
+
+        return false;
+
+    }
 
