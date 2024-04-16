@@ -15,10 +15,10 @@ public class AppTest {
     public void testHelloWorld() {
         var code = SpecsIo.getResource("pt/up/fe/comp/cp2/apps/HelloWorld.jmm");
         var jasminResult = TestUtils.backend(code, Collections.emptyMap());
-        System.out.println(jasminResult.getClassName());
-        System.out.println("jasmin cooooode: \n" + jasminResult.getJasminCode());
-        var result1 = TestUtils.optimize(code);
-        System.out.println("my ollir coooode :\n" + result1.getOllirCode());
+//        System.out.println(jasminResult.getClassName());
+        System.out.println(jasminResult.getJasminCode());
+//        var result1 = TestUtils.optimize(code);
+//        System.out.println("my ollir coooode :\n" + result1.getOllirCode());
 
         var result = TestUtils.runJasmin(jasminResult.getJasminCode(), Collections.emptyMap());
         assertEquals("Hello, World!", result.strip());

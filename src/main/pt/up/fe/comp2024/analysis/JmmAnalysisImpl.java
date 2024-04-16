@@ -18,12 +18,12 @@ public class JmmAnalysisImpl implements JmmAnalysis {
 
     public JmmAnalysisImpl() {
         this.analysisPasses = List.of(
+                new UndeclaredVariable(),
                 new ArrayInvalidExpr(),
+                new MethodVerification(),
                 new AssignInvalidExpr(),
                 new BinaryInvalidExpr(),
                 new ConditionInvalidExpr(),
-                new UndeclaredVariable(),
-                new MethodVerification(),
                 new ReturnInvalidExpr()
         );
     }
@@ -40,8 +40,11 @@ public class JmmAnalysisImpl implements JmmAnalysis {
         // Visit all nodes in the AST
         for (var analysisPass : analysisPasses) {
             try {
-                var passReports = analysisPass.analyze(rootNode, table);
+                List<Report> passReports = analysisPass.analyze(rootNode, table);
                 reports.addAll(passReports);
+                if(!passReports.isEmpty()){
+                    return new JmmSemanticsResult(parserResult, table, reports);
+                }
             } catch (Exception e) {
                 reports.add(Report.newError(Stage.SEMANTIC,
                         -1,

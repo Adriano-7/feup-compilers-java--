@@ -169,10 +169,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         if (name.equals("main")) {
             retType = ".V";
         }else if (node.getNumChildren() > 0) {
-            System.out.println("visitMethodDecl2");
-            System.out.println("node inside method decl: " + node.getJmmChild(0));
             retType = toOllirType(node.getJmmChild(0));
-            System.out.println("ret type: "+ retType);
         }
 
         code.append(retType);
@@ -180,8 +177,6 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         // rest of its children stmts
         int numParams = table.getParameters(name).size(); // Use symbol table to get number of parameters
-        System.out.println("params: " + table.getParameters(name));
-        System.out.println("children: " + node.getChildren());
 
         if (name.equals("main")){
             for (var child : node.getChildren()) {

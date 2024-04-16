@@ -14,6 +14,7 @@ import pt.up.fe.comp2024.symboltable.VarargSymbol;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static pt.up.fe.comp2024.ast.TypeUtils.isImported;
@@ -93,7 +94,7 @@ public class MethodVerification extends AnalysisVisitor {
                         argumentIndex++;
                     }
                 }
-                else if (TypeUtils.areTypesAssignable(argType, paramType)) {
+                else if (TypeUtils.areTypesAssignable(argType, paramType, table)) {
                       parameterIndex++;
                 }
                 else {
@@ -108,8 +109,12 @@ public class MethodVerification extends AnalysisVisitor {
             return null;
         }
 
-        expr.put("type", callerType.getName());
-        expr.put("isArray", callerType.isArray() ? "true" : "false");
+        //Use the table to getReturnTypeTry
+        Optional<Type> returnType = table.getReturnTypeTry(methodName);
+        if (returnType.isPresent()) {
+            expr.put("type", returnType.get().getName());
+            expr.put("isArray", returnType.get().isArray() ? "true" : "false");
+        }
 
         return null;
     }

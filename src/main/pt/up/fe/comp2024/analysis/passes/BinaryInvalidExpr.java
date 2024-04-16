@@ -32,6 +32,8 @@ public class BinaryInvalidExpr extends AnalysisVisitor {
         Type leftType = TypeUtils.getExprType(leftOperand, table);
         Type rightType = TypeUtils.getExprType(rightOperand, table);
 
+        if(leftType==null || rightType==null){return null;}
+
         String operator = binaryExpr.get("op");
 
         if (!checkCompatibility(leftType, rightType, operator)) {
@@ -52,6 +54,8 @@ public class BinaryInvalidExpr extends AnalysisVisitor {
     }
     
     private boolean checkCompatibility(Type leftType, Type rightType, String operator) {
+        if(leftType == null || rightType == null) return false;
+
         String leftTypeName = leftType.getName();
         String rightTypeName = rightType.getName();
         boolean leftIsArray = leftType.isArray();

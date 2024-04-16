@@ -15,9 +15,10 @@ public class SemanticAnalysisTest {
         var result = TestUtils
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/initial/semanticanalysis/UndeclaredVariable.jmm"));
         TestUtils.mustFail(result);
+        System.out.println(result.getReports());
+
         assertEquals(1, result.getReports(ReportType.ERROR).size());
 
-        System.out.println(result.getReports());
     }
 
 
