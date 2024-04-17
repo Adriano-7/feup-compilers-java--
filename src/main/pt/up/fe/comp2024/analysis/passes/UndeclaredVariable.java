@@ -11,6 +11,9 @@ import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 import pt.up.fe.comp2024.ast.TypeUtils;
 
+import java.util.HashMap;
+import java.util.HashSet;
+
 /**
  Checks if the type of the expression in a return statement is compatible with the method return type.
  • Verify if identifiers used in the code have a corresponding declaration, either as a local variable,
@@ -18,6 +21,7 @@ import pt.up.fe.comp2024.ast.TypeUtils;
  */
 public class UndeclaredVariable extends AnalysisVisitor {
     private String currentMethod;
+    HashSet<String> declaredVariables = new HashSet<>();
 
     @Override
     public void buildVisitor() {
@@ -27,6 +31,18 @@ public class UndeclaredVariable extends AnalysisVisitor {
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
         currentMethod = method.get("name");
+        if (declaredVariables.contains(currentMethod)) {
+            var message = String.format("Duplicate method declaration: '%s'", currentMethod);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(method),
+                    NodeUtils.getColumn(method),
+                    message,
+                    null)
+            );
+        } else {
+            declaredVariables.add(currentMethod);
+        }
         return null;
     }
 

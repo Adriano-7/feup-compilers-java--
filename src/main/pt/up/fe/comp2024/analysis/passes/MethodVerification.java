@@ -13,6 +13,7 @@ import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.comp2024.symboltable.VarargSymbol;
 import pt.up.fe.specs.util.SpecsCheck;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ verify if the classes are being imported.
 */
 
 public class MethodVerification extends AnalysisVisitor {
+
     @Override
     public void buildVisitor() {
         addVisit(Kind.METHOD_CALL_EXPR, this::checkMethodCall);
