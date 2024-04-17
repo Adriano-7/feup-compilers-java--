@@ -73,9 +73,32 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         // Get the type of the lhs variable
 
         String lhsType = toOllirType(node);
+        if(rhs.getCode().contains("invoke")){
+            //Store in a temporary variable
+            String temp = OptUtils.getTemp() + typeString;
+            code.append(temp);
+            code.append(SPACE);
+            code.append(ASSIGN);
+            code.append(typeString);
+            code.append(SPACE);
+            code.append(rhs.getCode());
+            code.append(END_STMT);
+
+            code.append(varName);
+            code.append(lhsType); // Add the type of the lhs variable
+            code.append(SPACE);
+            code.append(ASSIGN);
+            code.append(typeString);
+            code.append(SPACE);
+            code.append(temp);
+            code.append(END_STMT);
+            return code.toString();
+        }
+        else{
         code.append(varName);
         code.append(lhsType); // Add the type of the lhs variable
         code.append(SPACE);
+        }
 
         code.append(ASSIGN);
         code.append(typeString);

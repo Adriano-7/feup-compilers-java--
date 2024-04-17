@@ -33,6 +33,7 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         addVisit(BINARY_EXPR, this::visitBinExpr);
         addVisit(INTEGER_LITERAL, this::visitInteger);
         addVisit(METHOD_CALL_EXPR, this::visitMethodCall);
+        addVisit(NEW_OBJECT_EXPR, this::visitNewObjectExpr);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -50,6 +51,19 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         var lhs = visit(node.getJmmChild(0));
         var rhs = visit(node.getJmmChild(1));
+
+        if(rhs.getCode().contains("invoke")){
+            //Use OptUtils.getTemp() to get a new temporary variable and store the code in the computation
+            String temp = OptUtils.getTemp() + OptUtils.toOllirType(TypeUtils.getExprType(node, table));
+            StringBuilder computation = new StringBuilder();
+            computation.append(temp).append(SPACE).append(ASSIGN).append(".i32").append(SPACE).append(rhs.getCode()).append(END_STMT);
+            computation.append(lhs.getComputation());
+            //new temporary variable
+            String temp1 = OptUtils.getTemp() + OptUtils.toOllirType(TypeUtils.getExprType(node, table));
+            computation.append(temp1).append(SPACE).append(ASSIGN).append(".i32").append(SPACE).append(lhs.getCode()).append(SPACE).append(node.get("op")).append(OptUtils.toOllirType(TypeUtils.getExprType(node, table))).append(SPACE).append(temp).append(END_STMT);
+
+            return new OllirExprResult(temp1, computation);
+        }
 
         StringBuilder computation = new StringBuilder();
 
@@ -150,6 +164,21 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         OllirExprResult result = new OllirExprResult(code.toString(), computation.toString());
         return result;
+    }
+    
+    private OllirExprResult visitNewObjectExpr(JmmNode node, Void unused) {
+        StringBuilder computation = new StringBuilder();
+        StringBuilder code = new StringBuilder();
+
+        String newObj = "new(" + node.get("type") + ")" + OptUtils.toOllirType(TypeUtils.getExprType(node, table));
+
+        Type callType = TypeUtils.getExprType(node, table);
+        String temp = OptUtils.getTemp() + OptUtils.toOllirType(callType);
+
+        computation.append(temp).append(SPACE).append(ASSIGN).append(OptUtils.toOllirType(callType)).append(SPACE).append(newObj).append(END_STMT);
+        computation.append("invokespecial(").append(temp).append(",\"<init>\").V;\n");
+
+            return new OllirExprResult(temp, computation);
     }
 
     /**
