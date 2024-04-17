@@ -73,21 +73,48 @@ public class JasminGenerator {
             Operand arg1 = (Operand) callInstruction.getOperands().get(0);
             LiteralElement arg2 = (LiteralElement) callInstruction.getOperands().get(1);
 
-            code.append("invokestatic ");
-            code.append(arg1.getName()).append("/").append(arg2.getLiteral().replace("\"", ""));
-            code.append("(");
+            var instruction = new StringBuilder();
+            instruction.append("invokestatic ");
+            instruction.append(arg1.getName()).append("/").append(arg2.getLiteral().replace("\"", ""));
+            instruction.append("(");
 
             for (Element element : callInstruction.getArguments()) {
                 code.append(generators.apply(element));
-                code.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
+                instruction.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
             }
-            code.append(")");
-            code.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName()));
-            code.append(NL);
+            instruction.append(")");
+            instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName()));
+            instruction.append(NL);
+            code.append(instruction);
+
+        } else if (callInstruction.getInvocationType().equals(CallType.invokevirtual)) {
+            Operand first = (Operand) callInstruction.getOperands().get(0);
+            LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
+            var instruction = new StringBuilder();
+            ClassType classType = (ClassType) first.getType();
+
+            code.append(generators.apply(first));
+
+            instruction.append("invokevirtual ");
+            instruction.append(classType.getName()).append("/");
+            instruction.append(second.getLiteral().replace("\"", ""));
+            instruction.append("(");
+
+            for (Element element : callInstruction.getArguments()) {
+                code.append(generators.apply(element));
+                instruction.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
+            }
+
+            instruction.append(")");
+            instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
+            code.append(instruction);
+
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand operand1 = (Operand) callInstruction.getOperands().get(0);
             code.append("new ").append(operand1.getName()).append(NL);
             code.append("dup").append(NL);
+        } else {
+            System.out.println("FALTAMMMM MERDAAAs");
         }
 
         return code.toString();
@@ -301,7 +328,7 @@ public class JasminGenerator {
         if (reg < 4){
             code.append(getPrefix(operand.getType())).append("store_").append(reg).append(NL);
         }else{
-            code.append(getPrefix(operand.getType())).append("store").append(reg).append(NL);
+            code.append(getPrefix(operand.getType())).append("store ").append(reg).append(NL);
         }
 
         return code.toString();
