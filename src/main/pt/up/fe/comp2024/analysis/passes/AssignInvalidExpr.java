@@ -31,6 +31,24 @@ public class AssignInvalidExpr extends AnalysisVisitor {
         addVisit(Kind.ASSIGN_STMT, this::visitAssignStmt);
     }
     private Void visitAssignStmt(JmmNode assignStmt, SymbolTable table) {
+        JmmNode parent = assignStmt.getParent();
+        while (!parent.getKind().equals("ClassStmt") && !parent.getKind().equals("PublicStaticVoidMethodDecl") && !parent.getKind().equals("PublicMethodDecl")) {
+            parent = parent.getParent();
+        }
+
+        if(table.getFields().stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")))) {
+            if(parent.getKind().equals("PublicStaticVoidMethodDecl")){
+                var message = String.format("Cannot assign value to a field in a static method");
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null)
+                );
+            }
+        }
+
         //Get the type of the variable in the name
         Type assigneeType = getVarExprType(assignStmt, table);
         if(assigneeType == null) {
