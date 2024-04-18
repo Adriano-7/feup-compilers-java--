@@ -78,8 +78,14 @@ public class MethodVerification extends AnalysisVisitor {
         } else {
             List<VarargSymbol> parameterSymbols = table.getParameters(methodName).stream().map(VarargSymbol.class::cast).collect(Collectors.toList());
 
-            int parameterIndex = 0;
+            //If the size of arguments and parameters are not the same and the last parameter is not vararg give an error
+            if(arguments.size() != parameterSymbols.size() && !parameterSymbols.get(parameterSymbols.size() - 1).isVararg()) {
+                var message = String.format("Method '%s' expects %d arguments but %d were provided", methodName, parameterSymbols.size(), arguments.size());
+                addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(expr), NodeUtils.getColumn(expr), message, null));
+                return null;
+            }
 
+            int parameterIndex = 0;
             for(int argumentIndex = 0; argumentIndex < arguments.size(); argumentIndex++) {
                 Type argType = TypeUtils.getExprType(arguments.get(argumentIndex), table);
                 Type paramType = parameterSymbols.get(parameterIndex).getType();
@@ -96,12 +102,18 @@ public class MethodVerification extends AnalysisVisitor {
                         argumentIndex++;
                     }
                 }
+                else if (isVarArg){
+                    var message = String.format("Vararg parameter must be the last parameter");
+                    addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(expr), NodeUtils.getColumn(expr), message, null));
+                    return null;
+                }
                 else if (TypeUtils.areTypesAssignable(argType, paramType, table)) {
-                      parameterIndex++;
+                    parameterIndex++;
                 }
                 else {
                     var message = String.format("Argument at index %d is of type '%s' but method '%s' expects type '%s'", argumentIndex, argType, methodName, paramType);
                     addReport(Report.newError(Stage.SEMANTIC, NodeUtils.getLine(arguments.get(argumentIndex)), NodeUtils.getColumn(arguments.get(argumentIndex)), message, null));
+                    return null;
                 }
             }
         }
