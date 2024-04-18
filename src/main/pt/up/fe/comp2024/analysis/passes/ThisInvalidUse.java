@@ -22,6 +22,18 @@ public class ThisInvalidUse extends AnalysisVisitor {
     }
 
     private Void visitThisExpr(JmmNode thisExpr, SymbolTable table) {
+        if (!thisExpr.get("value").equals("this")) {
+            var message = String.format("Invalid use of 'this' expression");
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(thisExpr),
+                    NodeUtils.getColumn(thisExpr),
+                    message,
+                    null)
+            );
+        }
+
+
         JmmNode parent = thisExpr.getParent();
         while (!parent.getKind().equals("PublicStaticVoidMethodDecl") && !parent.getKind().equals("PublicMethodDecl")) {
             parent = parent.getParent();

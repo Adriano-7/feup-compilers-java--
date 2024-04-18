@@ -54,13 +54,11 @@ public class UndeclaredVariable extends AnalysisVisitor {
             parent = parent.getParent();
         }
 
-
         // Check if exists a parameter or variable declaration with the same name as the variable reference
         var varRefName = varRefExpr.get("name");
 
         // Var is a field, return
-        if (table.getFields().stream()
-                .anyMatch(param -> param.getName().equals(varRefName))) {
+        if (table.getFields().stream().anyMatch(param -> param.getName().equals(varRefName))) {
 
             if(parent.getKind().equals("PublicStaticVoidMethodDecl")){
                 var message = String.format("Trying to access field '%s' from a static context", varRefName);

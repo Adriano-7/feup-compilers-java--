@@ -53,6 +53,7 @@ program
 importDecl
     : IMPORT impPackage('.'impPackage)* SEMICOL #ImportStmt
     ;
+
 impPackage
     : name=ID
     ;
@@ -111,7 +112,7 @@ expr
     : LPAREN expr RPAREN #ParenExpr
     | expr LBRACK expr RBRACK #ArrayAccessExpr
     | expr DOT name=ID LPAREN (expr (COMMA expr)*)? RPAREN #MethodCallExpr
-    | expr DOT 'length' #ArrayLengthExpr
+    | expr DOT name=ID #ArrayLengthExpr
     | op=NOT expr #UnaryExpr
     | expr op= (MUL | DIV) expr #BinaryExpr
     | expr op= (ADD | SUB) expr #BinaryExpr
