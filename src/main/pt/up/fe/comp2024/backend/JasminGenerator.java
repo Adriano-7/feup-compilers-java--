@@ -374,9 +374,13 @@ public class JasminGenerator {
         code.append(generators.apply(binaryOp.getRightOperand()));
 
         // apply operation
+        var opTypeInfo = binaryOp.getOperation().getTypeInfo();
+        var opPrefix = getPrefix(opTypeInfo);
         var op = switch (binaryOp.getOperation().getOpType()) {
-            case ADD -> "iadd";
-            case MUL -> "imul";
+            case ADD -> opPrefix + "add";
+            case MUL -> opPrefix + "mul";
+            case SUB -> opPrefix + "sub";
+            case DIV -> opPrefix + "div";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
