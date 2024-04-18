@@ -9,6 +9,7 @@ import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 
 import java.util.HashSet;
+import java.util.List;
 
 public class InvalidImportExpr extends AnalysisVisitor {
     private HashSet<String> importStatements = new HashSet<>();
@@ -19,18 +20,19 @@ public class InvalidImportExpr extends AnalysisVisitor {
     }
 
     private Void visitImportDecl(JmmNode importStmt, SymbolTable table) {
-        JmmNode impPackageNode = importStmt.getChildren().stream()
-            .filter(child -> child.getKind().equals("ImpPackage"))
-            .findFirst()
-            .orElse(null);
-
+        List<JmmNode> impPackageNode;
+        impPackageNode = importStmt.getChildren("ImpPackage");
         if (impPackageNode == null) {
             return null;
         }
 
-        String importName = impPackageNode.get("name");
-        if (importStatements.contains(importName)) {
-            var message = String.format("Duplicate import statement: '%s'", importName);
+        StringBuilder impPackage = new StringBuilder();
+        for (JmmNode node : impPackageNode) {
+            impPackage.append(node.get("name"));
+        }
+
+        if (importStatements.contains(impPackage.toString())) {
+            var message = String.format("Duplicate import statement: '%s'", impPackage.toString());
             addReport(Report.newError(
                     Stage.SEMANTIC,
                     NodeUtils.getLine(importStmt),
@@ -39,8 +41,9 @@ public class InvalidImportExpr extends AnalysisVisitor {
                     null)
             );
         } else {
-            importStatements.add(importName);
+            importStatements.add(impPackage.toString());
         }
+
         return null;
     }
 }
