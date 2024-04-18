@@ -43,6 +43,21 @@ public class UndeclaredVariable extends AnalysisVisitor {
         } else {
             declaredVariables.add(currentMethod);
         }
+
+        if(!method.getKind().equals("PublicStaticVoidMethodDecl")){
+            JmmNode returnType = method.getChildren().get(0);
+            if(returnType.get("isVarArg").equals("true")){
+                var message = String.format("Method '%s' has a vararg return type", currentMethod);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(method),
+                        NodeUtils.getColumn(method),
+                        message,
+                        null)
+                );
+            }
+        }
+
         return null;
     }
 

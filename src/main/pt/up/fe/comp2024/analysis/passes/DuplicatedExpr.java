@@ -67,6 +67,18 @@ public class DuplicatedExpr extends AnalysisVisitor {
             vars.put(parent, declaredVars);
         }
 
+        JmmNode varType = varDeclNode.getChildren().get(0);
+        if(varType.get("isVarArg").equals("true")){
+            var message = String.format("Variable '%s' has a vararg type", varName);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(varDeclNode),
+                    NodeUtils.getColumn(varDeclNode),
+                    message,
+                    null)
+            );
+        }
+
         return null;
     }
 }
