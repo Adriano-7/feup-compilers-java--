@@ -26,7 +26,8 @@ public class JmmAnalysisImpl implements JmmAnalysis {
                 new ConditionInvalidExpr(),
                 new ReturnInvalidExpr(),
                 new InvalidImportExpr(),
-                new DuplicatedExpr()
+                new DuplicatedExpr(),
+                new ThisInvalidUse()
         );
     }
 
