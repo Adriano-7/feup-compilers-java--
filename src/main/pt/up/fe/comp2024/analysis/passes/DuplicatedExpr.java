@@ -46,20 +46,6 @@ public class DuplicatedExpr extends AnalysisVisitor {
             parent = parent.getParent();
         }
 
-        /*
-        if(parent.getKind().equals("PublicStaticVoidMethodDecl") && varDeclNode.get("isStatic").equals("true")) {
-            var message = String.format("Variable declaration '%s' in a static method: '%s'", varDeclNode.get("name"), parent.get("name"));
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(varDeclNode),
-                    NodeUtils.getColumn(varDeclNode),
-                    message,
-                    null)
-            );
-        }
-        */
-
-
         String varName = varDeclNode.get("name");
         if (vars.containsKey(parent)) {
             List<String> declaredVars = vars.get(parent);
