@@ -142,7 +142,7 @@ expr
 
 public class DuplicatedExpr extends AnalysisVisitor {
     private HashSet<String> params = new HashSet<>();
-    private HashMap<String, List<String>> vars = new HashMap<>();
+    private HashMap<JmmNode, List<String>> vars = new HashMap<>();
 
     @Override
     public void buildVisitor() {
@@ -169,21 +169,16 @@ public class DuplicatedExpr extends AnalysisVisitor {
 
     private Void visitVarDecl(JmmNode varDeclNode, SymbolTable table) {
         JmmNode parent = varDeclNode.getParent();
-        String parentName = "";
-        while (!parent.getKind().equals("ClassStmt") && !parent.getKind().equals("methodDecl") ) {
+        while (!parent.getKind().equals("ClassStmt") && !parent.getKind().equals("methodDecl") && !parent.getKind().equals("PublicMethodDecl")) {
             parent = parent.getParent();
         }
-        if (parent.getKind().equals("ClassStmt")) {
-            parentName = "C" + parent.get("name");
-        } else {
-            parentName = "M" + varDeclNode.get("name");
-        }
 
+        //Get the name of the variable and check if it is already declared
         String varName = varDeclNode.get("name");
         if (vars.containsKey(parent)) {
-            List<String> varList = vars.get(parent);
-            if (varList.contains(varName)) {
-                var message = String.format("Duplicate variable: '%s'", varName);
+            List<String> declaredVars = vars.get(parent);
+            if (declaredVars.contains(varName)) {
+                var message = String.format("Duplicate variable declaration: '%s of %s'", varName, parent.get("name"));
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(varDeclNode),
@@ -192,13 +187,14 @@ public class DuplicatedExpr extends AnalysisVisitor {
                         null)
                 );
             } else {
-                varList.add(varName);
+                declaredVars.add(varName);
             }
         } else {
-            List<String> varList = new ArrayList<>();
-            varList.add(varName);
-            vars.put(parentName, varList);
+            List<String> declaredVars = new ArrayList<>();
+            declaredVars.add(varName);
+            vars.put(parent, declaredVars);
         }
+
         return null;
     }
 }
