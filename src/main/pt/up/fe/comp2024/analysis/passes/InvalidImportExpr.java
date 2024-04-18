@@ -31,8 +31,9 @@ public class InvalidImportExpr extends AnalysisVisitor {
         //Compile the package name
         StringBuilder impPackage = new StringBuilder();
         for (JmmNode node : impPackageNode) {
-            impPackage.append(node.get("name"));
+            impPackage.append(node.get("name")).append(".");
         }
+        impPackage.deleteCharAt(impPackage.length() - 1);
 
         String[] splitImport = impPackage.toString().split("\\.");
         String importedName = splitImport[splitImport.length - 1];
