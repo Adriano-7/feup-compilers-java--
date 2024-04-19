@@ -71,6 +71,7 @@ public class JasminGenerator {
                 ClassType classType = (ClassType) className.getType();
                 String importedClass = getClassName(classType.getName());
                 code.append("invokespecial ").append(importedClass).append("/<init>()V").append(NL);
+                code.append("pop").append(NL);
             }
         } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -114,15 +115,15 @@ public class JasminGenerator {
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
             code.append(instruction);
 
+            if (callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID))
+                code.append("pop").append(NL);
+
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
             String importedClass = getClassName(className.getName());
             code.append("new ").append(importedClass).append(NL);
             code.append("dup").append(NL);
         }
-
-        if (callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID))
-            code.append("pop").append(NL);
 
         return code.toString();
     }
