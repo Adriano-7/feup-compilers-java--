@@ -63,7 +63,7 @@ public class JasminGenerator {
 
             var superClass = ollirResult.getOllirClass().getSuperClass()==null ||
                     ollirResult.getOllirClass().getSuperClass().equals("Object")?
-                    ollirResult.getOllirClass().getSuperClass() : "java/lang/Object";
+                    "java/lang/Object" : ollirResult.getOllirClass().getSuperClass();
 
             if (className.getName().equals("this"))
                 code.append("invokespecial ").append(getClassName(superClass)).append("/<init>()V").append(NL);
