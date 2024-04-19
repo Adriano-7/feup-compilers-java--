@@ -150,10 +150,10 @@ public class JasminGenerator {
 
         ClassType classType = (ClassType) operand1.getType();
         var ollirClassName = ollirResult.getOllirClass().getClassName();
-        String newClassName = getClassName(classType.getName());
+        String importedClass = getClassName(classType.getName());
 
         code.append(generators.apply(operand1));
-        code.append("getfield ").append(newClassName).append("/").append(operand2.getName()).append(" ");
+        code.append("getfield ").append(importedClass).append("/").append(operand2.getName()).append(" ");
         code.append(getDescriptor(operand2.getType(), ollirClassName)).append(NL);
 
         return code.toString();
@@ -203,13 +203,10 @@ public class JasminGenerator {
     }
 
     private String getPrefix(Type type) {
-        if (type.getTypeOfElement().equals(ElementType.INT32) || type.getTypeOfElement().equals(ElementType.BOOLEAN)) {
+        if (type.getTypeOfElement().equals(ElementType.INT32) || type.getTypeOfElement().equals(ElementType.BOOLEAN))
             return "i";
-        }
-        else {
+        else
             return "a";
-        }
-
     }
 
     private String getClassName(String className) {
@@ -224,32 +221,22 @@ public class JasminGenerator {
         return newClassName.get();
     }
 
-
-    private String generateClassUnit(ClassUnit classUnit) {
-
+    private String generateClassFields(){
         var code = new StringBuilder();
-
-        // generate class name
-        ClassUnit ollirClass = ollirResult.getOllirClass();
-        var className = ollirResult.getOllirClass().getClassName();
-        code.append(".class public ").append(className).append(NL).append(NL);
-
-        if (ollirClass.getSuperClass() == null || ollirClass.getSuperClass().equals("Object")){
-            code.append(".super java/lang/Object").append(NL);
-        } else {
-            code.append(".super ").append(getClassName(ollirClass.getSuperClass())).append(NL);
-        }
-
-        // generate fields
+        var ollirClass = ollirResult.getOllirClass();
         code.append(NL);
-        for (Field field : ollirClass.getFields()) {
+        for (Field field : ollirResult.getOllirClass().getFields()) {
             String modifier = field.getFieldAccessModifier().name().equals("DEFAULT")?"":field.getFieldAccessModifier().name().toLowerCase() + " ";
             code.append(".field ").append(modifier).append(field.getFieldName());
             code.append(" ").append(getDescriptor(field.getFieldType(), ollirClass.getClassName())).append(NL);
         }
         code.append(NL);
+        return code.toString();
+    }
 
-        // generate a single constructor method
+    private String generateClassConstructor(){
+        var code = new StringBuilder();
+        var ollirClass = ollirResult.getOllirClass();
         var defaultConstructor = """
                 ;default constructor
                 .method public <init>()V
@@ -268,19 +255,40 @@ public class JasminGenerator {
             code.append(TAB).append("return").append(NL);
             code.append(".end method").append(NL);
         }
+        return code.toString();
+    }
 
-        // generate code for all other methods
-        for (var method : ollirResult.getOllirClass().getMethods()) {
-
-            // Ignore constructor, since there is always one constructor
-            // that receives no arguments, and has been already added
-            // previously
+    private String generateClassMethods(){
+        var code = new StringBuilder();
+        for (Method method : ollirResult.getOllirClass().getMethods()) {
             if (method.isConstructMethod()) {
                 continue;
             }
-
             code.append(generators.apply(method));
         }
+        return code.toString();
+    }
+
+    private String generateClassUnit(ClassUnit classUnit) {
+
+        var code = new StringBuilder();
+
+        // generate class name
+        ClassUnit ollirClass = ollirResult.getOllirClass();
+        var className = ollirResult.getOllirClass().getClassName();
+        code.append(".class public ").append(className).append(NL).append(NL);
+
+        if (ollirClass.getSuperClass() == null || ollirClass.getSuperClass().equals("Object")){
+            code.append(".super java/lang/Object").append(NL);
+        } else {
+            code.append(".super ").append(getClassName(ollirClass.getSuperClass())).append(NL);
+        }
+
+        code.append(generateClassFields());
+
+        code.append(generateClassConstructor());
+
+        code.append(generateClassMethods());
 
         return code.toString();
     }
@@ -338,15 +346,6 @@ public class JasminGenerator {
         // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
 
-        // pop value if the rhs is a call instruction and the return type is void
-        if (
-                (assign.getRhs() instanceof CallInstruction) &&
-                ((CallInstruction) assign.getRhs()).getReturnType().getTypeOfElement().equals(ElementType.VOID) &&
-                !((CallInstruction) assign.getRhs()).getInvocationType().equals(CallType.invokespecial)
-        ) {
-            code.append("pop").append(NL);
-        }
-
         // store value in the stack in destination
         var lhs = assign.getDest();
 
@@ -373,22 +372,18 @@ public class JasminGenerator {
     }
 
     private String generateLiteral(LiteralElement literal) {
-        if (literal.getType().getTypeOfElement().equals(ElementType.INT32) || literal.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
-            int val = Integer.parseInt(literal.getLiteral());
+        int val = Integer.parseInt(literal.getLiteral());
 
-            if (val > -2 && val < 6){
-                return "iconst_" + literal.getLiteral() + NL;
+        if (val > -2 && val < 6){
+            return "iconst_" + literal.getLiteral() + NL;
 
-            }
-            else if (val > -129 && val < 128)
-                return "bipush " + literal.getLiteral() + NL;
-            else if (val > -32769 && val < 32768)
-                return "sipush " + literal.getLiteral() + NL;
-            else
-                return "ldc " + literal.getLiteral() + NL;
         }
+        else if (val > -129 && val < 128)
+            return "bipush " + literal.getLiteral() + NL;
+        else if (val > -32769 && val < 32768)
+            return "sipush " + literal.getLiteral() + NL;
         else
-            return "ldc \"" + literal.getLiteral() + "\"\n";
+            return "ldc " + literal.getLiteral() + NL;
     }
 
     private String generateOperand(Operand operand) {
