@@ -71,7 +71,6 @@ public class JasminGenerator {
                 ClassType classType = (ClassType) className.getType();
                 String importedClass = getClassName(classType.getName());
                 code.append("invokespecial ").append(importedClass).append("/<init>()V").append(NL);
-                code.append("pop").append(NL);
             }
         } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
