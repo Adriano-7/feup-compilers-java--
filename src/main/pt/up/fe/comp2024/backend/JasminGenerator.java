@@ -71,7 +71,6 @@ public class JasminGenerator {
                 ClassType classType = (ClassType) className.getType();
                 String importedClass = getClassName(classType.getName());
                 code.append("invokespecial ").append(importedClass).append("/<init>()V").append(NL);
-                code.append("pop").append(NL);
             }
         } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -81,13 +80,14 @@ public class JasminGenerator {
             var instruction = new StringBuilder();
             instruction.append("invokestatic ");
             instruction.append(importedClass).append("/").append(method.getLiteral().replace("\"", ""));
-            instruction.append("(");
 
+            instruction.append("(");
             for (Element element : callInstruction.getArguments()) {
                 code.append(generators.apply(element));
                 instruction.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
             }
             instruction.append(")");
+
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName()));
             instruction.append(NL);
             code.append(instruction);
@@ -104,19 +104,16 @@ public class JasminGenerator {
             instruction.append("invokevirtual ");
             instruction.append(importedClass).append("/");
             instruction.append(method.getLiteral().replace("\"", ""));
-            instruction.append("(");
 
+            instruction.append("(");
             for (Element element : callInstruction.getArguments()) {
                 code.append(generators.apply(element));
                 instruction.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
             }
-
             instruction.append(")");
+
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
             code.append(instruction);
-
-            if (callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID))
-                code.append("pop").append(NL);
 
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -336,6 +333,14 @@ public class JasminGenerator {
 
         // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
+
+        // pop value if the rhs is a call instruction and the return type is void
+        if (assign.getRhs() instanceof CallInstruction &&
+                ((CallInstruction) assign.getRhs()).getReturnType().getTypeOfElement().equals(ElementType.VOID) &&
+                !((CallInstruction) assign.getRhs()).getInvocationType().equals(CallType.invokespecial)
+        ) {
+            code.append("pop").append(NL);
+        }
 
         // store value in the stack in destination
         var lhs = assign.getDest();
