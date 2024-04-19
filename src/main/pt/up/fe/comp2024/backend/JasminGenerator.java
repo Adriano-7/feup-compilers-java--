@@ -370,24 +370,19 @@ public class JasminGenerator {
     }
 
     private String generateLiteral(LiteralElement literal) {
-        if (literal.getType().getTypeOfElement().equals(ElementType.INT32) || literal.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
-            int val = Integer.parseInt(literal.getLiteral());
+        int val = Integer.parseInt(literal.getLiteral());
 
-            if (val > -2 && val < 6){
-                return "iconst_" + literal.getLiteral() + NL;
+        if (val > -2 && val < 6){
+            return "iconst_" + literal.getLiteral() + NL;
 
-            }
-            else if (val > -129 && val < 128)
-                return "bipush " + literal.getLiteral() + NL;
-            else if (val > -32769 && val < 32768)
-                return "sipush " + literal.getLiteral() + NL;
-            else
-                return "ldc " + literal.getLiteral() + NL;
         }
+        else if (val > -129 && val < 128)
+            return "bipush " + literal.getLiteral() + NL;
+        else if (val > -32769 && val < 32768)
+            return "sipush " + literal.getLiteral() + NL;
         else
-            return "ldc \"" + literal.getLiteral() + "\"\n";
+            return "ldc " + literal.getLiteral() + NL;
     }
-
 
     private String generateOperand(Operand operand) {
         // get register
