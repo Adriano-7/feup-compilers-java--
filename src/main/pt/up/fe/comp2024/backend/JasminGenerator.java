@@ -122,6 +122,9 @@ public class JasminGenerator {
             code.append("dup").append(NL);
         }
 
+        if (callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID))
+            code.append("pop").append(NL);
+
         return code.toString();
     }
 
