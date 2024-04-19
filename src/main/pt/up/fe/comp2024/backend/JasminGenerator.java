@@ -61,10 +61,12 @@ public class JasminGenerator {
             Operand className = (Operand) callInstruction.getOperands().get(0);
             code.append(generators.apply(className));
 
-            var superClass = ollirResult.getOllirClass().getSuperClass()==null ? ollirResult.getOllirClass().getSuperClass() : "java/lang/Object";
+            var superClass = ollirResult.getOllirClass().getSuperClass()==null ||
+                    ollirResult.getOllirClass().getSuperClass().equals("Object")?
+                    ollirResult.getOllirClass().getSuperClass() : "java/lang/Object";
 
             if (className.getName().equals("this"))
-                code.append("invokespecial ").append(superClass).append("/<init>()V").append(NL);
+                code.append("invokespecial ").append(getClassName(superClass)).append("/<init>()V").append(NL);
             else {
                 ClassType classType = (ClassType) className.getType();
                 String importedClass = getClassName(classType.getName());

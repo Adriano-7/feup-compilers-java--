@@ -1,16 +1,17 @@
-import java.time.Instant;
-PrazerFactory extends Object {
+import io;
+SymbolTable extends Object {
 
+
+.method public method1().i32 {
+a.i32 :=.i32 1.i32;
+invokestatic(io, "println", a.i32).V;
+}
 
 .method public static main(args.array.String).V {
-tmp0.Instant :=.Instant invokestatic(Instant, "now").Instant;
-a.Instant :=.Instant tmp0.Instant;
-tmp1.i32 :=.Instant invokevirtual(a.Instant, "getNano").i32;
-b.i32 :=.i32 tmp1.i32;
 ret.V ;
 }
 
-.construct PrazerFactory().V {
+.construct SymbolTable().V {
 invokespecial(this, "").V;
 }
 }
