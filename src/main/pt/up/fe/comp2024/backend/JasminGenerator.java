@@ -9,8 +9,9 @@ import pt.up.fe.specs.util.exceptions.NotImplementedException;
 import pt.up.fe.specs.util.utilities.StringLines;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -52,21 +53,15 @@ public class JasminGenerator {
         generators.put(PutFieldInstruction.class, this::generatePutField);
         generators.put(GetFieldInstruction.class, this::generateGetField);
         generators.put(CallInstruction.class, this::generateCall);
-
     }
 
     private String generateCall(CallInstruction callInstruction) {
         var code = new StringBuilder();
 
-        System.out.println("invoke type: " + callInstruction.getInvocationType());
-        System.out.println("operands: " + callInstruction.getOperands());
-        System.out.println("caller:  " + callInstruction.getCaller());
-        System.out.println("arguments: " + callInstruction.getArguments());
-        System.out.println(NL);
-
         if (callInstruction.getInvocationType().equals(CallType.invokespecial)) {
             Operand operand1 = (Operand) callInstruction.getOperands().get(0);
             code.append(generators.apply(operand1));
+
             if (operand1.getName().equals("this"))
                 code.append("invokespecial java/lang/Object/<init>()V").append(NL);
             else {
@@ -75,36 +70,34 @@ public class JasminGenerator {
                 code.append("pop").append(NL);
             }
         } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
-            Operand className = (Operand) callInstruction.getOperands().get(0);
-            LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
-            String newClassName = getClassName(className.getName());
+            Operand arg1 = (Operand) callInstruction.getOperands().get(0);
+            LiteralElement arg2 = (LiteralElement) callInstruction.getOperands().get(1);
 
             var instruction = new StringBuilder();
             instruction.append("invokestatic ");
-            instruction.append(newClassName).append("/").append(method.getLiteral().replace("\"", ""));
-
+            instruction.append(arg1.getName()).append("/").append(arg2.getLiteral().replace("\"", ""));
             instruction.append("(");
+
             for (Element element : callInstruction.getArguments()) {
                 code.append(generators.apply(element));
-                instruction.append(getDescriptor(element.getType(), newClassName));
+                instruction.append(getDescriptor(element.getType(), ollirResult.getOllirClass().getClassName()));
             }
             instruction.append(")");
-
-            instruction.append(getDescriptor(callInstruction.getReturnType(), newClassName));
+            instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName()));
             instruction.append(NL);
             code.append(instruction);
 
         } else if (callInstruction.getInvocationType().equals(CallType.invokevirtual)) {
-            Operand className = (Operand) callInstruction.getOperands().get(0);
-            LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
+            Operand first = (Operand) callInstruction.getOperands().get(0);
+            LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
             var instruction = new StringBuilder();
-            ClassType classType = (ClassType) className.getType();
+            ClassType classType = (ClassType) first.getType();
 
-            code.append(generators.apply(className));
+            code.append(generators.apply(first));
 
             instruction.append("invokevirtual ");
-            instruction.append(getClassName(classType.getName())).append("/");
-            instruction.append(method.getLiteral().replace("\"", ""));
+            instruction.append(classType.getName()).append("/");
+            instruction.append(second.getLiteral().replace("\"", ""));
             instruction.append("(");
 
             for (Element element : callInstruction.getArguments()) {
@@ -120,6 +113,8 @@ public class JasminGenerator {
             Operand operand1 = (Operand) callInstruction.getOperands().get(0);
             code.append("new ").append(operand1.getName()).append(NL);
             code.append("dup").append(NL);
+        } else {
+            System.out.println("FALTAMMMM MERDAAAs");
         }
 
         return code.toString();
@@ -173,7 +168,6 @@ public class JasminGenerator {
     }
 
     private StringBuilder getDescriptor(Type type, String className) {
-        System.out.println("class name inside the descriptor: " + className);
         var ret = new StringBuilder();
         if (type.getTypeOfElement().equals(ElementType.INT32))
             ret.append("I");
@@ -193,7 +187,7 @@ public class JasminGenerator {
             ret.append("L").append(className).append(";");
         else if (type.getTypeOfElement().equals(ElementType.OBJECTREF)) {
             ClassType classType = (ClassType) type;
-            ret.append("L").append(className).append(";");
+            ret.append("L").append(classType.getName()).append(";");
         }
         return ret;
     }
@@ -208,18 +202,6 @@ public class JasminGenerator {
 
     }
 
-    private String getClassName(String className) {
-        AtomicReference<String> newClassName = new AtomicReference<>("");
-        ollirResult.getOllirClass().getImports().forEach(i -> {
-            if (i.contains(className))
-                newClassName.set(i.replace(".", "/"));
-        });
-        if (newClassName.get().isEmpty()){
-            newClassName.set(className);
-        }
-        return newClassName.get();
-    }
-
     private String generateClassUnit(ClassUnit classUnit) {
 
         var code = new StringBuilder();
@@ -227,11 +209,13 @@ public class JasminGenerator {
         // generate class name
         ClassUnit ollirClass = ollirResult.getOllirClass();
         var className = ollirResult.getOllirClass().getClassName();
-        code.append(".class public ").append(className).append(NL).append(NL);
+        code.append(".class ").append(className).append(NL).append(NL);
 
-        System.out.println("testt: " + classUnit.getImports());
-
-        code.append(".super java/lang/Object").append(NL);
+        if (ollirClass.getSuperClass() == null){
+            code.append(".super java/lang/Object").append(NL);
+        } else {
+            code.append(".super ").append(ollirClass.getSuperClass()).append(NL);
+        }
 
         // generate fields
         code.append(NL);
@@ -252,7 +236,8 @@ public class JasminGenerator {
                 .end method
                 """;
 
-        // code.append(defaultConstructor);
+        if (ollirClass.getSuperClass() == null)
+            code.append(defaultConstructor);
 
         // generate code for all other methods
         for (var method : ollirResult.getOllirClass().getMethods()) {
@@ -261,21 +246,10 @@ public class JasminGenerator {
             // that receives no arguments, and has been already added
             // previously
             if (method.isConstructMethod()) {
-                currentMethod = method;
-                code.append(".method public <init>()V").append(NL);
-                code.append(TAB).append(".limit stack 99").append(NL);
-                code.append(TAB).append(".limit locals 99").append(NL);
-                for (var instruction : method.getInstructions()) {
-                    var instCode = StringLines.getLines(generators.apply(instruction)).stream().collect(Collectors.joining(NL + TAB, TAB, NL));
-                    code.append(instCode);
-                }
-                code.append(TAB).append("return").append(NL);
-                code.append(".end method").append(NL);
-            }
-            else {
-                code.append(generators.apply(method));
+                continue;
             }
 
+            code.append(generators.apply(method));
         }
 
         return code.toString();
@@ -319,7 +293,8 @@ public class JasminGenerator {
         code.append(TAB).append(".limit locals 99").append(NL);
 
         for (var inst : method.getInstructions()) {
-            var instCode = StringLines.getLines(generators.apply(inst)).stream().collect(Collectors.joining(NL + TAB, TAB, NL));
+            var instCode = StringLines.getLines(generators.apply(inst)).stream()
+                    .collect(Collectors.joining(NL + TAB, TAB, NL));
 
             code.append(instCode);
         }
@@ -364,22 +339,22 @@ public class JasminGenerator {
     }
 
     private String generateLiteral(LiteralElement literal) {
-//        if (literal.getType().getTypeOfElement().equals(ElementType.INT32) || literal.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
-//            int val = Integer.parseInt(literal.getLiteral());
-//
-//            if (val > -2 && val < 6){
-//                return "iconst_" + literal.getLiteral() + NL;
-//
-//            }
-//            else if (val > -129 && val < 128)
-//                return "bipush " + literal.getLiteral() + NL;
-//            else if (val > -32769 && val < 32768)
-//                return "sipush " + literal.getLiteral() + NL;
-//            else
-//                return "ldc " + literal.getLiteral() + NL;
-//        }
-//        else
-            return "ldc " + literal.getLiteral() + "\n";
+        if (literal.getType().getTypeOfElement().equals(ElementType.INT32) || literal.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
+            int val = Integer.parseInt(literal.getLiteral());
+
+            if (val > -2 && val < 6){
+                return "iconst_" + literal.getLiteral() + NL;
+
+            }
+            else if (val > -129 && val < 128)
+                return "bipush " + literal.getLiteral() + NL;
+            else if (val > -32769 && val < 32768)
+                return "sipush " + literal.getLiteral() + NL;
+            else
+                return "ldc " + literal.getLiteral() + NL;
+        }
+        else
+            return "ldc \"" + literal.getLiteral() + "\"\n";
     }
 
     private String generateOperand(Operand operand) {

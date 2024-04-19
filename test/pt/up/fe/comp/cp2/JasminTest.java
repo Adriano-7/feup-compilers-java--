@@ -14,17 +14,6 @@ import static org.junit.Assert.assertEquals;
 public class JasminTest {
 
     @Test
-    public void myTest() {
-        var ollirResult = new OllirResult(SpecsIo.getResource("pt/up/fe/comp/cp2/jasmin/OllirToJasminImport2.ollir"), Collections.emptyMap());
-
-        var result = TestUtils.backend(ollirResult);
-
-        System.out.println("\n---------------JASMIN CODE---------------\n\n" + result.getJasminCode());
-
-        assertEquals(1, 1);
-    }
-
-    @Test
     public void ollirToJasminBasic() {
         testOllirToJasmin("pt/up/fe/comp/cp2/jasmin/OllirToJasminBasic.ollir");
     }
@@ -66,13 +55,9 @@ public class JasminTest {
         
         var testName = new File(resource).getName();
         System.out.println(testName + ":\n" + result.getJasminCode());
-
         var runOutput = result.runWithFullOutput();
         assertEquals("Error while running compiled Jasmin: " + runOutput.getOutput(), 0, runOutput.getReturnValue());
-
         System.out.println("\n Result: " + runOutput.getOutput());
-
-        System.out.println("------------JASMIN CODE------------" + result.getJasminCode());
 
         if (expectedOutput != null) {
             assertEquals(expectedOutput, runOutput.getOutput());
