@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -202,6 +203,19 @@ public class JasminGenerator {
 
     }
 
+    private String getClassName(String className) {
+        AtomicReference<String> newClassName = new AtomicReference<>("");
+        ollirResult.getOllirClass().getImports().forEach(i -> {
+            if (i.contains(className))
+                newClassName.set(i.replace(".", "/"));
+        });
+        if (newClassName.get().isEmpty()){
+            newClassName.set(className);
+        }
+        return newClassName.get();
+    }
+
+
     private String generateClassUnit(ClassUnit classUnit) {
 
         var code = new StringBuilder();
@@ -214,7 +228,7 @@ public class JasminGenerator {
         if (ollirClass.getSuperClass() == null){
             code.append(".super java/lang/Object").append(NL);
         } else {
-            code.append(".super ").append(ollirClass.getSuperClass()).append(NL);
+            code.append(".super ").append(getClassName(ollirClass.getSuperClass())).append(NL);
         }
 
         // generate fields
