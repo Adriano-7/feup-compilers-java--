@@ -190,10 +190,8 @@ public class JasminGenerator {
             ArrayType array = (ArrayType) type;
             ret.append("[").append(getDescriptor(array.getElementType(), className));
         }
-        else if (type.getTypeOfElement().equals(ElementType.THIS)){
-            String importedClass = getClassName(className);
-            ret.append("L").append(importedClass).append(";");
-        }
+        else if (type.getTypeOfElement().equals(ElementType.THIS))
+            ret.append("L").append(className).append(";");
         else if (type.getTypeOfElement().equals(ElementType.OBJECTREF)) {
             ClassType classType = (ClassType) type;
             String importedClass = getClassName(classType.getName());
