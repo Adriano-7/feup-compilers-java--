@@ -60,23 +60,27 @@ public class JasminGenerator {
         var code = new StringBuilder();
 
         if (callInstruction.getInvocationType().equals(CallType.invokespecial)) {
-            Operand operand1 = (Operand) callInstruction.getOperands().get(0);
-            code.append(generators.apply(operand1));
+            Operand className = (Operand) callInstruction.getOperands().get(0);
+            code.append(generators.apply(className));
 
-            if (operand1.getName().equals("this"))
-                code.append("invokespecial java/lang/Object/<init>()V").append(NL);
+            var superClass = ollirResult.getOllirClass().getSuperClass()==null ? ollirResult.getOllirClass().getSuperClass() : "java/lang/Object";
+
+            if (className.getName().equals("this"))
+                code.append("invokespecial ").append(superClass).append("/<init>()V").append(NL);
             else {
-                ClassType classType = (ClassType) operand1.getType();
-                code.append("invokespecial ").append(classType.getName()).append("/<init>()V").append(NL);
+                ClassType classType = (ClassType) className.getType();
+                String importedClass = getClassName(classType.getName());
+                code.append("invokespecial ").append(importedClass).append("/<init>()V").append(NL);
                 code.append("pop").append(NL);
             }
         } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
-            Operand arg1 = (Operand) callInstruction.getOperands().get(0);
-            LiteralElement arg2 = (LiteralElement) callInstruction.getOperands().get(1);
+            Operand className = (Operand) callInstruction.getOperands().get(0);
+            LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
+            String importedClass = getClassName(className.getName());
 
             var instruction = new StringBuilder();
             instruction.append("invokestatic ");
-            instruction.append(arg1.getName()).append("/").append(arg2.getLiteral().replace("\"", ""));
+            instruction.append(importedClass).append("/").append(method.getLiteral().replace("\"", ""));
             instruction.append("(");
 
             for (Element element : callInstruction.getArguments()) {
@@ -89,16 +93,17 @@ public class JasminGenerator {
             code.append(instruction);
 
         } else if (callInstruction.getInvocationType().equals(CallType.invokevirtual)) {
-            Operand first = (Operand) callInstruction.getOperands().get(0);
-            LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
+            Operand className = (Operand) callInstruction.getOperands().get(0);
+            LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
             var instruction = new StringBuilder();
-            ClassType classType = (ClassType) first.getType();
+            ClassType classType = (ClassType) className.getType();
+            String importedClass = getClassName(classType.getName());
 
-            code.append(generators.apply(first));
+            code.append(generators.apply(className));
 
             instruction.append("invokevirtual ");
-            instruction.append(classType.getName()).append("/");
-            instruction.append(second.getLiteral().replace("\"", ""));
+            instruction.append(importedClass).append("/");
+            instruction.append(method.getLiteral().replace("\"", ""));
             instruction.append("(");
 
             for (Element element : callInstruction.getArguments()) {
@@ -111,11 +116,10 @@ public class JasminGenerator {
             code.append(instruction);
 
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
-            Operand operand1 = (Operand) callInstruction.getOperands().get(0);
-            code.append("new ").append(operand1.getName()).append(NL);
+            Operand className = (Operand) callInstruction.getOperands().get(0);
+            String importedClass = getClassName(className.getName());
+            code.append("new ").append(importedClass).append(NL);
             code.append("dup").append(NL);
-        } else {
-            System.out.println("FALTAMMMM MERDAAAs");
         }
 
         return code.toString();
@@ -130,9 +134,10 @@ public class JasminGenerator {
         code.append(generators.apply(operand1));
         code.append(generators.apply(element3));
         ClassType classType = (ClassType) operand1.getType();
+        String importedClass = getClassName(classType.getName());
 
         var ollirClassName = ollirResult.getOllirClass().getClassName();
-        code.append("putfield ").append(classType.getName()).append("/").append(operand2.getName()).append(" ");
+        code.append("putfield ").append(importedClass).append("/").append(operand2.getName()).append(" ");
         code.append(getDescriptor(element3.getType(), ollirClassName)).append(NL);
 
         return code.toString();
@@ -145,9 +150,10 @@ public class JasminGenerator {
 
         ClassType classType = (ClassType) operand1.getType();
         var ollirClassName = ollirResult.getOllirClass().getClassName();
+        String newClassName = getClassName(classType.getName());
 
         code.append(generators.apply(operand1));
-        code.append("getfield ").append(classType.getName()).append("/").append(operand2.getName()).append(" ");
+        code.append("getfield ").append(newClassName).append("/").append(operand2.getName()).append(" ");
         code.append(getDescriptor(operand2.getType(), ollirClassName)).append(NL);
 
         return code.toString();
@@ -188,7 +194,8 @@ public class JasminGenerator {
             ret.append("L").append(className).append(";");
         else if (type.getTypeOfElement().equals(ElementType.OBJECTREF)) {
             ClassType classType = (ClassType) type;
-            ret.append("L").append(classType.getName()).append(";");
+            String importedClass = getClassName(classType.getName());
+            ret.append("L").append(importedClass).append(";");
         }
         return ret;
     }
