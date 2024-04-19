@@ -13,6 +13,20 @@ import static org.junit.Assert.assertEquals;
 
 public class JasminTest {
 
+
+    @Test
+    public void runOllirToJasmin() {
+
+        var ollirResult = new OllirResult(SpecsIo.getResource("pt/up/fe/comp/cp2/jasmin/OllirToJasminPop.ollir"), Collections.emptyMap());
+        var jasminResult = TestUtils.backend(ollirResult);
+        var jasminCode = jasminResult.getJasminCode();
+        System.out.println("---------------JASMINNINI-----------------\n" + jasminCode);
+
+        var output = TestUtils.runJasmin(jasminCode);
+
+        //assertEquals("120", SpecsStrings.normalizeFileContents(output).trim());
+    }
+
     @Test
     public void ollirToJasminBasic() {
         testOllirToJasmin("pt/up/fe/comp/cp2/jasmin/OllirToJasminBasic.ollir");

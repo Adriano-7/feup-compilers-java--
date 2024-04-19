@@ -9,9 +9,7 @@ import pt.up.fe.specs.util.exceptions.NotImplementedException;
 import pt.up.fe.specs.util.utilities.StringLines;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -92,8 +90,6 @@ public class JasminGenerator {
             instruction.append(NL);
             code.append(instruction);
 
-            System.out.println("showwww carll static: " + callInstruction.getPred());
-
         } else if (callInstruction.getInvocationType().equals(CallType.invokevirtual)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
             LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
@@ -116,8 +112,6 @@ public class JasminGenerator {
 
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
             code.append(instruction);
-
-            System.out.println("showwww carll virtual: " + callInstruction.getPred());
 
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -234,9 +228,9 @@ public class JasminGenerator {
         // generate class name
         ClassUnit ollirClass = ollirResult.getOllirClass();
         var className = ollirResult.getOllirClass().getClassName();
-        code.append(".class ").append(className).append(NL).append(NL);
+        code.append(".class public ").append(className).append(NL).append(NL);
 
-        if (ollirClass.getSuperClass() == null){
+        if (ollirClass.getSuperClass() == null || ollirClass.getSuperClass().equals("Object")){
             code.append(".super java/lang/Object").append(NL);
         } else {
             code.append(".super ").append(getClassName(ollirClass.getSuperClass())).append(NL);
@@ -261,7 +255,7 @@ public class JasminGenerator {
                 .end method
                 """;
 
-        if (ollirClass.getSuperClass() == null)
+        if (ollirClass.getSuperClass() == null || ollirClass.getSuperClass().equals("Object"))
             code.append(defaultConstructor);
         else{
             code.append(".method public <init>()V").append(NL);
@@ -302,7 +296,7 @@ public class JasminGenerator {
 
         var methodName = method.getMethodName();
 
-        code.append("\n.method ");
+        code.append(NL).append(".method ");
         if (method.isFinalMethod()) code.append("final ");
         code.append(modifier);
         if (method.isStaticMethod()) code.append("static ");
