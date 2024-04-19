@@ -92,6 +92,8 @@ public class JasminGenerator {
             instruction.append(NL);
             code.append(instruction);
 
+            System.out.println("showwww carll static: " + callInstruction.getPred());
+
         } else if (callInstruction.getInvocationType().equals(CallType.invokevirtual)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
             LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
@@ -114,6 +116,8 @@ public class JasminGenerator {
 
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
             code.append(instruction);
+
+            System.out.println("showwww carll virtual: " + callInstruction.getPred());
 
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -259,6 +263,13 @@ public class JasminGenerator {
 
         if (ollirClass.getSuperClass() == null)
             code.append(defaultConstructor);
+        else{
+            code.append(".method public <init>()V").append(NL);
+            code.append(TAB).append("aload_0").append(NL);
+            code.append(TAB).append("invokespecial ").append(getClassName(ollirClass.getSuperClass())).append("/<init>()V").append(NL);
+            code.append(TAB).append("return").append(NL);
+            code.append(".end method").append(NL);
+        }
 
         // generate code for all other methods
         for (var method : ollirResult.getOllirClass().getMethods()) {
@@ -291,20 +302,15 @@ public class JasminGenerator {
 
         var methodName = method.getMethodName();
 
-        var tmp = new StringBuilder();
-        if (method.isFinalMethod())
-            tmp.append("final ");
+        code.append("\n.method ");
+        if (method.isFinalMethod()) code.append("final ");
+        code.append(modifier);
+        if (method.isStaticMethod()) code.append("static ");
 
-        tmp.append(modifier);
-
-        if (method.isStaticMethod())
-            tmp.append("static ");
-
-        code.append("\n.method ").append(tmp).append(methodName).append("(");
+        code.append(methodName).append("(");
 
         for (Element param : method.getParams()) {
-            tmp = getDescriptor(param.getType(), ollirResult.getOllirClass().getClassName());
-            code.append(tmp);
+            code.append(getDescriptor(param.getType(), ollirResult.getOllirClass().getClassName()));
         }
 
         code.append(")").append(getDescriptor(method.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
@@ -335,7 +341,8 @@ public class JasminGenerator {
         code.append(generators.apply(assign.getRhs()));
 
         // pop value if the rhs is a call instruction and the return type is void
-        if (assign.getRhs() instanceof CallInstruction &&
+        if (
+                (assign.getRhs() instanceof CallInstruction) &&
                 ((CallInstruction) assign.getRhs()).getReturnType().getTypeOfElement().equals(ElementType.VOID) &&
                 !((CallInstruction) assign.getRhs()).getInvocationType().equals(CallType.invokespecial)
         ) {
