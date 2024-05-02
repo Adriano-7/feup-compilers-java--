@@ -24,8 +24,11 @@ public class TypeUtils {
      * @return
      */
     public static Type getExprType(JmmNode expr, SymbolTable table) {
-        // TODO: Simple implementation that needs to be expanded
         var kind = Kind.fromString(expr.getKind());
+
+        if(kind.equals(Kind.ARRAY_ACCESS_EXPR)) {
+            return new Type(INT_TYPE_NAME, false);
+        }
 
         Type type = getOptionalType(expr);
         if(type != null) {
@@ -174,9 +177,6 @@ public class TypeUtils {
             Type methodType = table.getReturnType(methodName);
 
             if (methodType == null) {
-
-
-
                 String superClass = table.getSuper();
                 if (superClass == null || !table.getImports().contains(superClass)) {
                     return null;
@@ -218,15 +218,6 @@ public class TypeUtils {
             return false;
         }
 
-        // Check if the types are the same
-        if (sourceType.getName().equals(destinationType.getName())) {
-            if(!sourceType.isArray() && destinationType.isArray()) {
-                return false;
-            }
-
-            return true;
-        }
-
         String superClass = table.getSuper();
         if (superClass != null && superClass.equals(destinationType.getName())) {
             return true;
@@ -240,6 +231,14 @@ public class TypeUtils {
         }
 
         if (isImported(sourceType, table) || isImported(destinationType, table)) {
+            return true;
+        }
+
+        // Check if the types are the same
+        if (sourceType.getName().equals(destinationType.getName())) {
+            if(!sourceType.isArray() && destinationType.isArray()) {
+                return false;
+            }
             return true;
         }
 

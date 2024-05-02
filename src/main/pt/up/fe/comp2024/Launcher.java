@@ -50,7 +50,7 @@ public class Launcher {
         //Print AST resulting from semantic analysis
         System.out.println(semanticsResult.getRootNode().toTree());
 
-
+        /*
         // Optimization stage
         JmmOptimizationImpl ollirGen = new JmmOptimizationImpl();
         OllirResult ollirResult = ollirGen.toOllir(semanticsResult);
@@ -66,6 +66,8 @@ public class Launcher {
 
         // Print Jasmin code
         System.out.println(jasminResult.getJasminCode());
+
+         */
 
     }
 
