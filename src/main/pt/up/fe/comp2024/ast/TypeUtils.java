@@ -220,6 +220,10 @@ public class TypeUtils {
 
         // Check if the types are the same
         if (sourceType.getName().equals(destinationType.getName())) {
+            if(!sourceType.isArray() && destinationType.isArray()) {
+                return false;
+            }
+
             return true;
         }
 
