@@ -36,8 +36,8 @@ public class AssignInvalidExpr extends AnalysisVisitor {
             parent = parent.getParent();
         }
 
-        if(table.getFields().stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")))) {
-            if(parent.getKind().equals("PublicStaticVoidMethodDecl")){
+        if (table.getFields().stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")))) {
+            if (parent.getKind().equals("PublicStaticVoidMethodDecl")) {
                 var message = String.format("Cannot assign value to a field in a static method");
                 addReport(Report.newError(
                         Stage.SEMANTIC,
@@ -49,9 +49,9 @@ public class AssignInvalidExpr extends AnalysisVisitor {
             }
         }
 
-        //Get the type of the variable in the name
+        // Get the type of the variable in the name
         Type assigneeType = getVarExprType(assignStmt, table);
-        if(assigneeType == null) {
+        if (assigneeType == null) {
             addReport(Report.newError(
                     Stage.SEMANTIC,
                     NodeUtils.getLine(assignStmt),
@@ -65,39 +65,40 @@ public class AssignInvalidExpr extends AnalysisVisitor {
         assignStmt.put("type", assigneeType.getName());
         assignStmt.put("isArray", assigneeType.isArray() ? "true" : "false");
 
-        //Get the type of the expression
+        // Get the type of the expression
         JmmNode expression = assignStmt.getChildren().get(0);
-
         Type expressionType = TypeUtils.getExprType(expression, table);
 
-        //Check if the types are compatible
-        if (!TypeUtils.areTypesAssignable(expressionType, assigneeType, table)) {
-            var message = String.format("Type of the assignee (%s) must be compatible with the assigned (%s)", assigneeType, expressionType);
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(assignStmt),
-                    NodeUtils.getColumn(assignStmt),
-                    message,
-                    null)
-            );
-        }
-        else if (expression.getKind().equals("UnspecifiedTypeNewArrayExpr")) {
-            List<JmmNode> children = expression.getChildren();
-            for (JmmNode child : children) {
-                if (!child.getKind().equals("IntegerLiteral")) {
-                    var message = String.format("Array initializer can only have integers");
-                    addReport(Report.newError(
-                            Stage.SEMANTIC,
-                            NodeUtils.getLine(assignStmt),
-                            NodeUtils.getColumn(assignStmt),
-                            message,
-                            null)
-                    );
+        if (expression.getKind().equals("UnspecifiedTypeNewArrayExpr")) {
+            // Array initializer
+            if (!assigneeType.isArray() || !assigneeType.getName().equals("int")) {
+                var message = String.format("Type of the assignee (%s) must be an array of integers", assigneeType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(assignStmt),
+                        NodeUtils.getColumn(assignStmt),
+                        message,
+                        null)
+                );
+            } else {
+                List<JmmNode> children = expression.getChildren();
+                for (JmmNode child : children) {
+                    if (!child.getKind().equals("IntegerLiteral")) {
+                        var message = String.format("Array initializer can only have integers");
+                        addReport(Report.newError(
+                                Stage.SEMANTIC,
+                                NodeUtils.getLine(assignStmt),
+                                NodeUtils.getColumn(assignStmt),
+                                message,
+                                null)
+                        );
+                    }
                 }
             }
-
-            if (!expressionType.isArray() || !expressionType.getName().equals("int")) {
-                var message = String.format("Type of the assignee (%s) must be an array of integers", assigneeType);
+        } else {
+            // Check if the types are compatible
+            if (!TypeUtils.areTypesAssignable(expressionType, assigneeType, table)) {
+                var message = String.format("Type of the assignee (%s) must be compatible with the assigned (%s)", assigneeType, expressionType);
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(assignStmt),
