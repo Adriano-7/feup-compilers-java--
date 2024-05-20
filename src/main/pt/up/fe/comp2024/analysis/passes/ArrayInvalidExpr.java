@@ -23,10 +23,7 @@ public class ArrayInvalidExpr extends AnalysisVisitor {
 
     private Void visitArrayAccessExpr(JmmNode binaryExpr, SymbolTable table) {
         JmmNode array = binaryExpr.getChildren().get(0);
-        JmmNode index = binaryExpr.getChildren().get(1);
-
         Type arrayType = TypeUtils.getExprType(array, table);
-        Type indexType = TypeUtils.getExprType(index, table);
 
         if (!arrayType.isArray()) {
             var message = String.format("Array access is done over an expression of type '%s'", arrayType);
@@ -39,19 +36,27 @@ public class ArrayInvalidExpr extends AnalysisVisitor {
             );
         }
 
-        if (!indexType.getName().equals("int")) {
-            var message = String.format("Array access index is an expression of type '%s'", indexType);
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(binaryExpr),
-                    NodeUtils.getColumn(binaryExpr),
-                    message,
-                    null)
-            );
-        }
+        JmmNode index = binaryExpr.getChildren().get(1);
+        if (index == null) {
+            // Array length expression
+            binaryExpr.put("type", "int");
+            binaryExpr.put("isArray", "false");
+        } else {
+            Type indexType = TypeUtils.getExprType(index, table);
+            if (!indexType.getName().equals("int")) {
+                var message = String.format("Array access index is an expression of type '%s'", indexType);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+            }
 
-        binaryExpr.put("type", arrayType.getName());
-        binaryExpr.put("isArray", "true");
+            binaryExpr.put("type", arrayType.getName());
+            binaryExpr.put("isArray", "true");
+        }
 
         return null;
     }
