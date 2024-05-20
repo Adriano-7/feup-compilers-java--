@@ -1,13 +1,13 @@
+import io;
 
-import Other;
-// import Person;
+class Arithmetic_not {
+	public static void main(String[] args) {
+		boolean a;
 
-class BasicMethods extends Other {
+        a = !true;
 
-    public int[] func4(){
-        int[] k;
-        k = new int[1];
-        return k;
-    }
+        io.println(a);
+	}
+
 
 }

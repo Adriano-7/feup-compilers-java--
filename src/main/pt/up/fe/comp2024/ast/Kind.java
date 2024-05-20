@@ -30,7 +30,8 @@ public enum Kind {
     METHOD_CALL_EXPR,
     THIS_EXPR,
     STRING_TYPE,
-    EXPR_STMT;
+    EXPR_STMT,
+    UNARY_EXPR;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);

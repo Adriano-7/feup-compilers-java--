@@ -35,6 +35,8 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         addVisit(METHOD_CALL_EXPR, this::visitMethodCall);
         addVisit(NEW_OBJECT_EXPR, this::visitNewObjectExpr);
         addVisit(SPECIFIC_TYPE_NEW_ARRAY_EXPR, this::visitNewArrayObjectExpr);
+        addVisit(UNARY_EXPR, this::visitUnaryExpr);
+        addVisit(BOOLEAN_LITERAL, this::visitBooleanLiteral);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -179,7 +181,7 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         computation.append(temp).append(SPACE).append(ASSIGN).append(OptUtils.toOllirType(callType)).append(SPACE).append(newObj).append(END_STMT);
         computation.append("invokespecial(").append(temp).append(",\"<init>\").V;\n");
 
-            return new OllirExprResult(temp, computation);
+        return new OllirExprResult(temp, computation);
     }
 
     /**
@@ -213,4 +215,30 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         return new OllirExprResult(temp, computation);
     }
 
+    private OllirExprResult visitUnaryExpr(JmmNode node, Void unused) {
+        StringBuilder computation = new StringBuilder();
+
+        // Get the operation
+        String op = node.get("op");
+
+        // Visit the child expression
+        var child = visit(node.getJmmChild(0));
+
+        // Code to compute the child
+        computation.append(child.getComputation());
+
+        // Code to compute self
+        Type resType = TypeUtils.getExprType(node, table);
+        String resOllirType = OptUtils.toOllirType(resType);
+        String code = op + resOllirType + SPACE + child.getCode();
+
+        return new OllirExprResult(code, computation);
+    }
+
+    private OllirExprResult visitBooleanLiteral(JmmNode node, Void unused) {
+        var boolType = new Type("boolean", false);
+        String ollirBoolType = OptUtils.toOllirType(boolType);
+        String code = node.get("value") + ollirBoolType;
+        return new OllirExprResult(code);
+    }
 }

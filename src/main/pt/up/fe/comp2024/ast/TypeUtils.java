@@ -48,6 +48,7 @@ public class TypeUtils {
             case ARRAY_ACCESS_EXPR -> new Type(INT_TYPE_NAME, false);
             case STRING_TYPE -> new Type("String", false);
             case INT_TYPE -> new Type(INT_TYPE_NAME, false);
+            case UNARY_EXPR -> new Type(BOOLEAN_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
