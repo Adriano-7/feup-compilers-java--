@@ -288,8 +288,6 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         return code.toString();
     }
 
-
-
     private String visitMethodCallExpr(JmmNode node, Void unused) {
         StringBuilder code = new StringBuilder();
 
@@ -297,7 +295,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         String methodName = node.get("name");
 
         // Get the method's arguments
-        List<JmmNode> arguments = List.of();
+        List<JmmNode> arguments = new ArrayList<>();
         if (node.getNumChildren() > 0) {
             arguments = node.getChildren().subList(1, node.getNumChildren());
         }
@@ -315,9 +313,21 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append(methodName);
         code.append("\"");
         for (int i = 0; i < arguments.size(); i++) {
+            JmmNode argument = arguments.get(i);
             code.append(", ");
-            code.append(arguments.get(i).get("name"));
-            code.append(toOllirType(arguments.get(i)));
+            if (argument.getKind().equals("IntegerLiteral")) {
+                code.append(argument.get("value"));
+                code.append(toOllirType(new Type("int", false)));
+            } else if (argument.getKind().equals("BooleanLiteral")) {
+                code.append(argument.get("value"));
+                code.append(toOllirType(new Type("bool", false)));
+            } else if (argument.getKind().equals("BinaryExpr")) {
+                code.append(exprVisitor.visit(argument).getCode());
+            }
+            else {
+                code.append(argument.get("name"));
+                code.append(toOllirType(argument));
+            }
             if (i < arguments.size() - 1) {
                 code.append(", ");
             }
