@@ -1,18 +1,13 @@
-import io;
 
-class CompileMethodInvocation {
+import Other;
+// import Person;
 
-    public static void main(String[] args) {
+class BasicMethods extends Other {
 
+    public int[] func4(){
+        int[] k;
+        k = new int[1];
+        return k;
     }
 
-    public int foo() {
-        int a;
-
-        a = 1;
-
-        io.println(a);
-
-        return 0;
-    }
 }
