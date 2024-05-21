@@ -377,12 +377,29 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append(conditionResult.getCode());
         code.append(") goto ").append(trueLabel).append(";\n");
         code.append("goto ").append(falseLabel).append(";\n");
+
         code.append(trueLabel).append(":\n");
-        code.append(visit(node.getJmmChild(1))); // Visit the true branch
-        code.append("goto ").append(endLabel).append(";\n"); // Jump to the end label
+        code.append(visitIfElseBranch(node.getJmmChild(1))); // Visit the true branch
+
         code.append(falseLabel).append(":\n");
-        code.append(visit(node.getJmmChild(2))); // Visit the false branch
+        code.append(visitIfElseBranch(node.getJmmChild(2))); // Visit the false branch
+
         code.append(endLabel).append(":\n"); // End label
+
+        return code.toString();
+    }
+
+    private String visitIfElseBranch(JmmNode node) {
+        StringBuilder code = new StringBuilder();
+
+        if (node.getKind().equals("IfElseStmt")) {
+            code.append(visit(node));
+        }
+        else {
+            for (var child : node.getChildren()) {
+                code.append(visit(child));
+            }
+        }
 
         return code.toString();
     }
