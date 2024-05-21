@@ -69,12 +69,11 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         // code to compute self
         // statement has type of rhs
-        Type thisType = TypeUtils.getExprType(node.getJmmChild(0), table);
-        String typeString = toOllirType(thisType);
+        String typeString = toOllirType(node.getJmmChild(0), table);
 
         // Get the type of the lhs variable
 
-        String lhsType = toOllirType(node);
+        String lhsType = toOllirType(node,table);
         if(rhs.getCode().contains("invoke")){
             //Store in a temporary variable
             String temp = OptUtils.getTemp() + typeString;
@@ -113,11 +112,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         return code.toString();
     }
     private String visitReturn(JmmNode node, Void unused) {
-        Type retType = new Type(node.get("type"), Boolean.parseBoolean(node.get("isArray")));
-        if(retType.getName().equals("boolean")) {
-            Type ah = new Type("bool", false);
-        }
-        String typeString = toOllirType(retType);
+        String typeString = toOllirType(node,table);
 
         StringBuilder code = new StringBuilder();
 
@@ -139,7 +134,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     }
 
     private String visitParam(JmmNode node, Void unused) {
-        var typeCode = toOllirType(node.getJmmChild(0));
+        var typeCode = toOllirType(node.getJmmChild(0),table);
         var id = node.get("name");
 
         String code = id + typeCode;
@@ -189,7 +184,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         if (name.equals("main")) {
             retType = ".V";
         }else if (node.getNumChildren() > 0) {
-            retType = toOllirType(node.getJmmChild(0));
+            retType = toOllirType(node.getJmmChild(0),table);
         }
 
         code.append(retType);
@@ -328,7 +323,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
             }
             else {
                 code.append(argument.get("name"));
-                code.append(toOllirType(argument));
+                code.append(toOllirType(argument, table));
             }
             if (i < arguments.size() - 1) {
                 code.append(", ");

@@ -31,7 +31,10 @@ public enum Kind {
     THIS_EXPR,
     STRING_TYPE,
     EXPR_STMT,
-    UNARY_EXPR;
+    UNARY_EXPR,
+    ARRAY_LENGTH_EXPR,
+    BOOLEAN_TYPE,
+    INT_ARRAY_TYPE;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);

@@ -1,9 +1,11 @@
 package pt.up.fe.comp2024.optimization;
 
 import org.specs.comp.ollir.Instruction;
+import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp2024.ast.NodeUtils;
+import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 
 import java.util.List;
@@ -31,48 +33,49 @@ public class OptUtils {
         tempNumber += 1;
         return tempNumber;
     }
-    public static String toOllirType(JmmNode typeNode) {
+
+    public static String toOllirType(JmmNode typeNode, SymbolTable table) {
         //TYPE.checkOrThrow(typeNode);
-        String typeName;
+        Type type = TypeUtils.getExprType(typeNode, table);
 
-        System.out.println(typeNode);
-        if(typeNode.getOptional("type").isPresent()) {
-            typeName= typeNode.get("type");
-        }
-        else {
-            typeName = typeNode.get("name");
-        }
-        Optional<Boolean> isArray = typeNode.getOptional("isArray").map(Boolean::parseBoolean);
+        String result = ".";
 
-        String type = ".";
-
-        if (!isArray.isEmpty() && isArray.get()) {
-            type += "array.";
+        if (type.isArray()) {
+            result += "array.";
         }
 
-        type += switch (typeName) {
+        result += switch (type.getName()) {
             case "int" -> "i32";
             case "boolean" -> "bool";
             case "String" -> "String";
-            default -> typeName;
+            default -> type.getName();
         };
 
-        return type;
+        return result;
     }
 
     public static String toOllirType(Type type) {
+        String result = "";
+        if(type.isArray()){
+            result += "array.";
+        }
+        result += "." + switch (type.getName()) {
+            case "int" -> "i32";
+            case "boolean" -> "bool";
+            case "String" -> "String";
+            default -> type.getName();
+        };
+
         return toOllirType(type.getName());
     }
 
-    private static String toOllirType(String typeName) {
-
+    public static String toOllirType(String typeName) {
         String type = "." + switch (typeName) {
             case "int" -> "i32";
             case "boolean" -> "bool";
             case "String" -> "String";
             default -> typeName;
         };
-
         return type;
     }
 
@@ -81,6 +84,4 @@ public class OptUtils {
         labelCounter++;
         return label;
     }
-
-
 }

@@ -12,10 +12,6 @@ public class TypeUtils {
     private static final String INT_TYPE_NAME = "int";
     private static final String BOOLEAN_TYPE_NAME = "boolean";
 
-    public static String getIntTypeName() {
-        return INT_TYPE_NAME;
-    }
-
     /**
      * Gets the {@link Type} of an arbitrary expression.
      *
@@ -49,11 +45,16 @@ public class TypeUtils {
             case STRING_TYPE -> new Type("String", false);
             case INT_TYPE -> new Type(INT_TYPE_NAME, false);
             case UNARY_EXPR -> new Type(BOOLEAN_TYPE_NAME, false);
+            case ARRAY_LENGTH_EXPR -> new Type(INT_TYPE_NAME, false);
+            case BOOLEAN_TYPE -> new Type(BOOLEAN_TYPE_NAME, false);
+            case INT_ARRAY_TYPE -> new Type(INT_TYPE_NAME, true);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
         if (type != null && !expr.getOptional("type").isPresent()) {
             expr.put("type", type.getName());
+        }
+        if (type != null && !expr.getOptional("isArray").isPresent()) {
             expr.put("isArray", type.isArray() ? "true" : "false");
         }
 

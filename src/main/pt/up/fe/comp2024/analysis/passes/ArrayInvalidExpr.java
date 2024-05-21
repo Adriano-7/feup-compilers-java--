@@ -19,6 +19,7 @@ public class ArrayInvalidExpr extends AnalysisVisitor {
     @Override
     public void buildVisitor() {
         addVisit(Kind.ARRAY_ACCESS_EXPR, this::visitArrayAccessExpr);
+        addVisit(Kind.ARRAY_LENGTH_EXPR, this::visitArrayLengthExpr);
     }
 
     private Void visitArrayAccessExpr(JmmNode binaryExpr, SymbolTable table) {
@@ -57,6 +58,38 @@ public class ArrayInvalidExpr extends AnalysisVisitor {
             binaryExpr.put("type", arrayType.getName());
             binaryExpr.put("isArray", "true");
         }
+
+        return null;
+    }
+
+    private Void visitArrayLengthExpr(JmmNode arrayLengthExpr, SymbolTable table) {
+        if(!arrayLengthExpr.get("name").equals("length")) {
+            var message = "Calling a method that is not 'length'.";
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(arrayLengthExpr),
+                    NodeUtils.getColumn(arrayLengthExpr),
+                    message,
+                    null)
+            );
+        }
+
+        JmmNode array = arrayLengthExpr.getChildren().get(0);
+        Type arrayType = TypeUtils.getExprType(array, table);
+
+        if (!arrayType.isArray()) {
+            var message = String.format("Array length is done over an expression of type '%s'", arrayType);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(arrayLengthExpr),
+                    NodeUtils.getColumn(arrayLengthExpr),
+                    message,
+                    null)
+            );
+        }
+
+        arrayLengthExpr.put("type", "int");
+        arrayLengthExpr.put("isArray", "false");
 
         return null;
     }

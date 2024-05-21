@@ -37,18 +37,16 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         addVisit(SPECIFIC_TYPE_NEW_ARRAY_EXPR, this::visitNewArrayObjectExpr);
         addVisit(UNARY_EXPR, this::visitUnaryExpr);
         addVisit(BOOLEAN_LITERAL, this::visitBooleanLiteral);
+        addVisit(ARRAY_LENGTH_EXPR, this::visitArrayLengthExpr);
 
         setDefaultVisit(this::defaultVisit);
     }
 
 
     private OllirExprResult visitInteger(JmmNode node, Void unused) {
-        var intType = new Type(TypeUtils.getIntTypeName(), false);
-        String ollirIntType = OptUtils.toOllirType(intType);
-        String code = node.get("value") + ollirIntType;
+        String code = node.get("value") + OptUtils.toOllirType("int");
         return new OllirExprResult(code);
     }
-
 
     private OllirExprResult visitBinExpr(JmmNode node, Void unused) {
 
@@ -56,14 +54,33 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         var rhs = visit(node.getJmmChild(1));
 
         if(rhs.getCode().contains("invoke")){
-            //Use OptUtils.getTemp() to get a new temporary variable and store the code in the computation
-            String temp = OptUtils.getTemp() + OptUtils.toOllirType(TypeUtils.getExprType(node, table));
+            String temp = OptUtils.getTemp() + OptUtils.toOllirType(node,table);
             StringBuilder computation = new StringBuilder();
-            computation.append(temp).append(SPACE).append(ASSIGN).append(".i32").append(SPACE).append(rhs.getCode()).append(END_STMT);
+
+            computation.append(temp)
+                       .append(SPACE)
+                       .append(ASSIGN)
+                       .append(".i32")
+                       .append(SPACE)
+                       .append(rhs.getCode())
+                       .append(END_STMT);
+
             computation.append(lhs.getComputation());
-            //new temporary variable
-            String temp1 = OptUtils.getTemp() + OptUtils.toOllirType(TypeUtils.getExprType(node, table));
-            computation.append(temp1).append(SPACE).append(ASSIGN).append(".i32").append(SPACE).append(lhs.getCode()).append(SPACE).append(node.get("op")).append(OptUtils.toOllirType(TypeUtils.getExprType(node, table))).append(SPACE).append(temp).append(END_STMT);
+
+            String temp1 = OptUtils.getTemp() + OptUtils.toOllirType(node,table);
+
+            computation.append(temp1)
+                       .append(SPACE)
+                       .append(ASSIGN)
+                       .append(".i32")
+                       .append(SPACE)
+                       .append(lhs.getCode())
+                       .append(SPACE)
+                       .append(node.get("op"))
+                       .append(OptUtils.toOllirType(node,table))
+                       .append(SPACE)
+                       .append(temp)
+                       .append(END_STMT);
 
             return new OllirExprResult(temp1, computation);
         }
@@ -75,16 +92,14 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         computation.append(rhs.getComputation());
 
         // code to compute self
-        Type resType = TypeUtils.getExprType(node, table);
-        String resOllirType = OptUtils.toOllirType(resType);
+        String resOllirType = OptUtils.toOllirType(node,table);
         String code = OptUtils.getTemp() + resOllirType;
 
         computation.append(code).append(SPACE)
                 .append(ASSIGN).append(resOllirType).append(SPACE)
                 .append(lhs.getCode()).append(SPACE);
 
-        Type type = TypeUtils.getExprType(node, table);
-        computation.append(node.get("op")).append(OptUtils.toOllirType(type)).append(SPACE)
+        computation.append(node.get("op")).append(OptUtils.toOllirType(node,table)).append(SPACE)
                 .append(rhs.getCode()).append(END_STMT);
 
         return new OllirExprResult(code, computation);
@@ -92,10 +107,8 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
 
     private OllirExprResult visitVarRef(JmmNode node, Void unused) {
-
         var id = node.get("name");
-        Type type = TypeUtils.getExprType(node, table);
-        String ollirType = OptUtils.toOllirType(type);
+        String ollirType = OptUtils.toOllirType(node,table);
 
         String code = id + ollirType;
 
@@ -119,7 +132,7 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
             callerType = "V";
         } else {
             callerName = caller.get("name");
-            callerType = OptUtils.toOllirType(new Type(caller.get("type"), caller.getOptional("isArray").map(Boolean::parseBoolean).orElse(false)));
+            callerType = OptUtils.toOllirType(caller,table);
         }
 
         if (!caller.getKind().equals("ThisExpr")) {
@@ -139,7 +152,7 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         String invokeType;
         if (callerType.equals(table.getClassName()) || callerType.equals("this")) {
             invokeType = "invokevirtual";
-            methodType = toOllirType(table.getReturnType(methodName));
+            methodType = toOllirType(node,table);
         } else {
             if (table.getImports().contains(callerType)) {
                 invokeType = "invokevirtual";
@@ -162,7 +175,6 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
             argsString = "";
         }
 
-        //invokeMethod + "(" + callerName.callerType + ", " + "\"" + methodName + "\"" + argsString + ")"+ returnType
         code.append(invokeType).append("(").append(callerName).append(".").append(callerType).append(", ").append("\"").append(methodName).append("\"").append(argsString).append(")").append(methodType);
 
         OllirExprResult result = new OllirExprResult(code.toString(), computation.toString());
@@ -173,40 +185,22 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         StringBuilder computation = new StringBuilder();
         StringBuilder code = new StringBuilder();
 
-        String newObj = "new(" + node.get("type") + ")" + OptUtils.toOllirType(TypeUtils.getExprType(node, table));
+        String newObj = "new(" + node.get("type") + ")" + OptUtils.toOllirType(node,table);
 
-        Type callType = TypeUtils.getExprType(node, table);
-        String temp = OptUtils.getTemp() + OptUtils.toOllirType(callType);
+        String temp = OptUtils.getTemp() + OptUtils.toOllirType(node,table);
 
-        computation.append(temp).append(SPACE).append(ASSIGN).append(OptUtils.toOllirType(callType)).append(SPACE).append(newObj).append(END_STMT);
+        computation.append(temp).append(SPACE).append(ASSIGN).append(OptUtils.toOllirType(node,table)).append(SPACE).append(newObj).append(END_STMT);
         computation.append("invokespecial(").append(temp).append(",\"<init>\").V;\n");
 
         return new OllirExprResult(temp, computation);
     }
-
-    /**
-     * Default visitor. Visits every child node and return an empty result.
-     *
-     * @param node
-     * @param unused
-     * @return
-     */
-    private OllirExprResult defaultVisit(JmmNode node, Void unused) {
-
-        for (var child : node.getChildren()) {
-            visit(child);
-        }
-
-        return OllirExprResult.EMPTY;
-    }
-
 
     private OllirExprResult visitNewArrayObjectExpr(JmmNode node, Void unused) {
         StringBuilder computation = new StringBuilder();
         StringBuilder code = new StringBuilder();
 
         String size = visit(node.getJmmChild(0)).getCode();
-        String type = OptUtils.toOllirType(new Type(node.get("type"), node.getOptional("isArray").map(Boolean::parseBoolean).orElse(false)));
+        String type = OptUtils.toOllirType(node,table);
 
         String temp = OptUtils.getTemp() + type;
 
@@ -228,17 +222,46 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         computation.append(child.getComputation());
 
         // Code to compute self
-        Type resType = TypeUtils.getExprType(node, table);
-        String resOllirType = OptUtils.toOllirType(resType);
+        String resOllirType = OptUtils.toOllirType(node,table);
         String code = op + resOllirType + SPACE + child.getCode();
 
         return new OllirExprResult(code, computation);
     }
 
     private OllirExprResult visitBooleanLiteral(JmmNode node, Void unused) {
-        var boolType = new Type("boolean", false);
-        String ollirBoolType = OptUtils.toOllirType(boolType);
+        String ollirBoolType = OptUtils.toOllirType(node,table);
         String code = node.get("value") + ollirBoolType;
         return new OllirExprResult(code);
+    }
+
+    private OllirExprResult visitArrayLengthExpr(JmmNode node, Void unused) {
+        JmmNode arrayNode = node.getJmmChild(0);
+        OllirExprResult arrayResult = visit(arrayNode);
+
+        StringBuilder computation = new StringBuilder();
+        computation.append(arrayResult.getComputation());
+
+        String temp = OptUtils.getTemp() + OptUtils.toOllirType("int");
+        computation.append(temp)
+                .append(" :=.i32 ")
+                .append("arraylength(")
+                .append(arrayResult.getCode())
+                .append(").i32;\n");
+
+        return new OllirExprResult(temp, computation);
+    }
+
+    /**
+     * Default visitor. Visits every child node and return an empty result.
+     *
+     * @param node
+     * @param unused
+     * @return
+     */
+    private OllirExprResult defaultVisit(JmmNode node, Void unused) {
+        for (var child : node.getChildren()) {
+            visit(child);
+        }
+        return OllirExprResult.EMPTY;
     }
 }
