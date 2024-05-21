@@ -13,6 +13,8 @@ import static pt.up.fe.comp2024.ast.Kind.TYPE;
 
 public class OptUtils {
     private static int tempNumber = -1;
+    private static int labelCounter = 0;
+
 
     public static String getTemp() {
 
@@ -72,6 +74,12 @@ public class OptUtils {
         };
 
         return type;
+    }
+
+    public static String getLabel(String prefix) {
+        String label = prefix + "_" + labelCounter;
+        labelCounter++;
+        return label;
     }
 
 

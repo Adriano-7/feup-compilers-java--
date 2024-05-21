@@ -48,6 +48,8 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         addVisit(METHOD_CALL_EXPR, this::visitMethodCallExpr);
         addVisit(IMPORT_DECL, this::visitImportDecl);
         addVisit(EXPR_STMT, this::visitExprStmt);
+        addVisit(IF_ELSE_STMT, this::visitIfElseStmt);
+        addVisit(WHILE_STMT, this::visitWhileStmt);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -355,6 +357,62 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         for (var child : node.getChildren()) {
             code.append(visit(child));
         }
+
+        return code.toString();
+    }
+
+    private String visitIfElseStmt(JmmNode node, Void unused) {
+        StringBuilder code = new StringBuilder();
+
+        // Visit the condition expression
+        JmmNode condition = node.getJmmChild(0);
+        OllirExprResult conditionResult = exprVisitor.visit(condition);
+        code.append(conditionResult.getComputation());
+
+        String trueLabel = OptUtils.getLabel("true");
+        String falseLabel = OptUtils.getLabel("false");
+        String endLabel = OptUtils.getLabel("end");
+
+        code.append("if (");
+        code.append(conditionResult.getCode());
+        code.append(") goto ").append(trueLabel).append(";\n");
+        code.append("goto ").append(falseLabel).append(";\n");
+        code.append(trueLabel).append(":\n");
+        code.append(visit(node.getJmmChild(1))); // Visit the true branch
+        code.append("goto ").append(endLabel).append(";\n"); // Jump to the end label
+        code.append(falseLabel).append(":\n");
+        code.append(visit(node.getJmmChild(2))); // Visit the false branch
+        code.append(endLabel).append(":\n"); // End label
+
+        return code.toString();
+    }
+    private String visitWhileStmt(JmmNode node, Void unused) {
+        StringBuilder code = new StringBuilder();
+
+        // Generate a label for the loop condition
+        String conditionLabel = OptUtils.getLabel("loop_condition");
+        code.append(conditionLabel).append(":\n");
+
+        // Visit the condition expression
+        JmmNode condition = node.getJmmChild(0);
+        OllirExprResult conditionResult = exprVisitor.visit(condition);
+        code.append(conditionResult.getComputation());
+
+        // Generate code for the condition
+        code.append("if (");
+        code.append(conditionResult.getCode());
+        code.append(") goto loop_body;\n");
+        code.append("goto loop_end;\n");
+
+        // Generate a label for the loop body
+        String bodyLabel = OptUtils.getLabel("loop_body");
+        code.append(bodyLabel).append(":\n");
+        code.append(visit(node.getJmmChild(1))); // Visit the loop body
+        code.append("goto ").append(conditionLabel).append(";\n"); // Jump back to the condition
+
+        // Generate a label for the end of the loop
+        String endLabel = OptUtils.getLabel("loop_end");
+        code.append(endLabel).append(":\n");
 
         return code.toString();
     }
