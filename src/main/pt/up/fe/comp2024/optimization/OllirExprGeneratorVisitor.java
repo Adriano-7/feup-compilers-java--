@@ -49,61 +49,86 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
     }
 
     private OllirExprResult visitBinExpr(JmmNode node, Void unused) {
-
         var lhs = visit(node.getJmmChild(0));
         var rhs = visit(node.getJmmChild(1));
 
-        if(rhs.getCode().contains("invoke")){
-            String temp = OptUtils.getTemp() + OptUtils.toOllirType(node,table);
-            StringBuilder computation = new StringBuilder();
-
-            computation.append(temp)
-                       .append(SPACE)
-                       .append(ASSIGN)
-                       .append(".i32")
-                       .append(SPACE)
-                       .append(rhs.getCode())
-                       .append(END_STMT);
-
-            computation.append(lhs.getComputation());
-
-            String temp1 = OptUtils.getTemp() + OptUtils.toOllirType(node,table);
-
-            computation.append(temp1)
-                       .append(SPACE)
-                       .append(ASSIGN)
-                       .append(".i32")
-                       .append(SPACE)
-                       .append(lhs.getCode())
-                       .append(SPACE)
-                       .append(node.get("op"))
-                       .append(OptUtils.toOllirType(node,table))
-                       .append(SPACE)
-                       .append(temp)
-                       .append(END_STMT);
-
-            return new OllirExprResult(temp1, computation);
-        }
-
         StringBuilder computation = new StringBuilder();
 
-        // code to compute the children
+        if (node.get("op").equals("&&")) {
+            // Label for the short-circuit evaluation
+            String trueLabel = OptUtils.getLabel("true");
+            String endLabel = OptUtils.getLabel("end");
+
+            computation.append(lhs.getComputation());
+            String tmp1 = OptUtils.getTemp() + ".bool";
+            computation.append("if(").append(lhs.getCode()).append(") goto ").append(trueLabel).append(END_STMT);
+            computation.append(tmp1).append(" :=.bool 0.bool").append(END_STMT);
+            computation.append("goto ").append(endLabel).append(END_STMT);
+
+            computation.append(trueLabel).append(":\n");
+            String tmp2 = OptUtils.getTemp() + ".bool";
+            computation.append(tmp2).append(" :=.bool ").append(rhs.getCode()).append(END_STMT);
+            computation.append(tmp1).append(" :=.bool ").append(tmp2).append(END_STMT);
+
+            computation.append(endLabel).append(":\n");
+            return new OllirExprResult(tmp1, computation);
+        }
+
+        if(rhs.getCode().contains("invoke")){
+            String temp = OptUtils.getTemp() + OptUtils.toOllirType(node, table);
+            computation.append(lhs.getComputation());
+
+            String lhsTemp = OptUtils.getTemp() + OptUtils.toOllirType(node, table);
+            computation.append(lhsTemp)
+                    .append(SPACE)
+                    .append(ASSIGN)
+                    .append(OptUtils.toOllirType(node, table))
+                    .append(SPACE)
+                    .append(lhs.getCode())
+                    .append(END_STMT);
+
+            String rhsTemp = OptUtils.getTemp() + OptUtils.toOllirType(node, table);
+            computation.append(rhsTemp)
+                    .append(SPACE)
+                    .append(ASSIGN)
+                    .append(OptUtils.toOllirType(node, table))
+                    .append(SPACE)
+                    .append(rhs.getCode())
+                    .append(END_STMT);
+
+            String resultTemp = OptUtils.getTemp() + OptUtils.toOllirType(node, table);
+            computation.append(resultTemp)
+                    .append(SPACE)
+                    .append(ASSIGN)
+                    .append(OptUtils.toOllirType(node, table))
+                    .append(SPACE)
+                    .append(lhsTemp)
+                    .append(SPACE)
+                    .append(node.get("op"))
+                    .append(OptUtils.toOllirType(node, table))
+                    .append(SPACE)
+                    .append(rhsTemp)
+                    .append(END_STMT);
+
+            return new OllirExprResult(resultTemp, computation);
+        }
+
         computation.append(lhs.getComputation());
         computation.append(rhs.getComputation());
 
-        // code to compute self
-        String resOllirType = OptUtils.toOllirType(node,table);
+        String resOllirType = OptUtils.toOllirType(node, table);
         String code = OptUtils.getTemp() + resOllirType;
 
         computation.append(code).append(SPACE)
                 .append(ASSIGN).append(resOllirType).append(SPACE)
                 .append(lhs.getCode()).append(SPACE);
 
-        computation.append(node.get("op")).append(OptUtils.toOllirType(node,table)).append(SPACE)
+        computation.append(node.get("op")).append(OptUtils.toOllirType(node, table)).append(SPACE)
                 .append(rhs.getCode()).append(END_STMT);
 
         return new OllirExprResult(code, computation);
     }
+
 
 
     private OllirExprResult visitVarRef(JmmNode node, Void unused) {
