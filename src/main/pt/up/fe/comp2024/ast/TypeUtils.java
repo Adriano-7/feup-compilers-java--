@@ -48,6 +48,7 @@ public class TypeUtils {
             case ARRAY_LENGTH_EXPR -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_TYPE -> new Type(BOOLEAN_TYPE_NAME, false);
             case INT_ARRAY_TYPE -> new Type(INT_TYPE_NAME, true);
+            case RETURN_STMT -> getExprType(expr.getChild(0), table);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 

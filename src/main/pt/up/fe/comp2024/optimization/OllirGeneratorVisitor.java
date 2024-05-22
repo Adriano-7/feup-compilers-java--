@@ -312,18 +312,23 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         for (int i = 0; i < arguments.size(); i++) {
             JmmNode argument = arguments.get(i);
             code.append(", ");
-            if (argument.getKind().equals("IntegerLiteral")) {
-                code.append(argument.get("value"));
-                code.append(toOllirType(new Type("int", false)));
-            } else if (argument.getKind().equals("BooleanLiteral")) {
-                code.append(argument.get("value"));
-                code.append(toOllirType(new Type("bool", false)));
-            } else if (argument.getKind().equals("BinaryExpr")) {
-                code.append(exprVisitor.visit(argument).getCode());
-            }
-            else {
-                code.append(argument.get("name"));
-                code.append(toOllirType(argument, table));
+            switch (argument.getKind()) {
+                case "IntegerLiteral":
+                    code.append(argument.get("value"));
+                    code.append(toOllirType(new Type("int", false)));
+                    break;
+                case "BooleanLiteral":
+                    code.append(argument.get("value"));
+                    code.append(toOllirType(new Type("bool", false)));
+                    break;
+                case "BinaryExpr":
+                case "ArrayAccessExpr":
+                    code.append(exprVisitor.visit(argument).getCode());
+                    break;
+                default:
+                    code.append(argument.get("name"));
+                    code.append(toOllirType(argument, table));
+                    break;
             }
             if (i < arguments.size() - 1) {
                 code.append(", ");
