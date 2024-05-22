@@ -11,6 +11,7 @@ import pt.up.fe.specs.util.utilities.StringLines;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +53,42 @@ public class JasminGenerator {
         generators.put(PutFieldInstruction.class, this::generatePutField);
         generators.put(GetFieldInstruction.class, this::generateGetField);
         generators.put(CallInstruction.class, this::generateCall);
+        generators.put(CondBranchInstruction.class, this::generateCondBranch);
+        generators.put(GotoInstruction.class, this::generateGoto);
+    }
+
+    private String generateGoto(GotoInstruction gotoInstruction) {
+        var code = new StringBuilder();
+        code.append("goto ").append(gotoInstruction.getLabel()).append(NL);
+        var labels = currentMethod.getLabels();
+        for (String label : labels.keySet()) {
+            if (labels.get(label).equals(gotoInstruction))
+                code.append(label).append(":").append(NL);
+        }
+        return code.toString();
+    }
+
+    private String generateCondBranch(CondBranchInstruction condBranchInstruction) {
+        var code = new StringBuilder();
+        if (condBranchInstruction instanceof OpCondInstruction opCondInstruction) {
+            code.append(generators.apply(opCondInstruction.getCondition()));
+
+            if (code.toString().contains("if")) {
+                code = new StringBuilder(code.substring(0, code.lastIndexOf("if") + 4));
+                code.append(" ").append(opCondInstruction.getLabel()).append(NL);
+            }
+        }
+        else if (condBranchInstruction instanceof SingleOpCondInstruction opCondInstruction) {
+            code.append(generators.apply(opCondInstruction.getCondition()));
+
+            if (code.toString().startsWith("if") || code.toString().contains("\nif")) {
+                code = new StringBuilder(code.substring(0, code.lastIndexOf("\n")));
+                code.append(" ").append(opCondInstruction.getLabel()).append(NL);
+            }
+            else
+                code.append("ifne ").append(opCondInstruction.getLabel()).append(NL);
+        }
+        return code.toString();
     }
 
     private String generateCall(CallInstruction callInstruction) {
@@ -341,6 +378,12 @@ public class JasminGenerator {
     private String generateAssign(AssignInstruction assign) {
         var code = new StringBuilder();
 
+        for (String label : currentMethod.getLabels().keySet()) {
+            if (currentMethod.getLabels().get(label).equals(assign)){
+                code.append(label).append(":").append(NL);
+            }
+        }
+
         // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
 
@@ -408,6 +451,9 @@ public class JasminGenerator {
             case MUL -> opPrefix + "mul";
             case SUB -> opPrefix + "sub";
             case DIV -> opPrefix + "div";
+            case AND -> opPrefix + "and";
+            case OR -> opPrefix + "or";
+            case XOR -> opPrefix + "xor";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
