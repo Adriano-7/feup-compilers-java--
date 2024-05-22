@@ -119,9 +119,6 @@ public class Cpf2_SemanticAnalysis {
     @Test
     public void section2_Lookup_VarLookup_Field() {
         var jasminResult = getJasminResult("lookup/VarLookup_Field.jmm");
-
         CpUtils.assertEquals("Lookup of field", "10", jasminResult.run().trim(), jasminResult);
     }
-
-
 }

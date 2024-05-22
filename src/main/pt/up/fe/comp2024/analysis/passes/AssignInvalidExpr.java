@@ -36,8 +36,10 @@ public class AssignInvalidExpr extends AnalysisVisitor {
             parent = parent.getParent();
         }
 
-        if (table.getFields().stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")))) {
-            if (parent.getKind().equals("PublicStaticVoidMethodDecl") && !parent.get("name").equals("main")) {
+        boolean isLocal = table.getLocalVariables(parent.get("name")).stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")));
+        boolean isField = table.getFields().stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")));
+        if (!isLocal && isField) {
+            if (parent.getKind().equals("PublicStaticVoidMethodDecl")) {
                 var message = String.format("Cannot assign value to a field in a static method");
                 addReport(Report.newError(
                         Stage.SEMANTIC,
@@ -47,6 +49,16 @@ public class AssignInvalidExpr extends AnalysisVisitor {
                         null)
                 );
             }
+        }
+        else if (!isLocal && !isField) {
+            var message = String.format("Variable %s is not declared", assignStmt.get("name"));
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null)
+            );
         }
 
         // Get the type of the variable in the name
