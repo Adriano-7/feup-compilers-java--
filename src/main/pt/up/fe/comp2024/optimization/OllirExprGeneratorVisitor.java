@@ -152,27 +152,13 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         Type callerTypeNode = TypeUtils.getExprType(caller, table);
 
-        if(caller.getKind().equals("ThisExpr")) {
-            callerName = "this";
-            callerType = "V";
-        } else {
-            callerName = caller.get("name");
-            callerType = OptUtils.toOllirType(caller,table);
-        }
-
-        if (!caller.getKind().equals("ThisExpr")) {
-            if (this.table.getImports().contains(callerName)) {
-                callerName = caller.get("name");
-                callerType = callerTypeNode.getName();
-            } else {
-                String[] callerSplit = callerName.split("\\.");
-                callerType = callerTypeNode.getName();
-            }
-        } else {
+        if (caller.getKind().equals("ThisExpr")) {
             callerName = "this";
             callerType = table.getClassName();
+        } else {
+            callerName = caller.get("name");
+            callerType = callerTypeNode.getName();
         }
-
 
         String invokeType;
         if (callerType.equals(table.getClassName()) || callerType.equals("this")) {
@@ -200,7 +186,19 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
             argsString = "";
         }
 
-        code.append(invokeType).append("(").append(callerName).append(".").append(callerType).append(", ").append("\"").append(methodName).append("\"").append(argsString).append(")").append(methodType);
+        code
+            .append(invokeType)
+            .append("(")
+            .append(callerName)
+            .append(".")
+            .append(callerType)
+            .append(", ")
+            .append("\"")
+            .append(methodName)
+            .append("\"")
+            .append(argsString)
+            .append(")")
+            .append(methodType);
 
         OllirExprResult result = new OllirExprResult(code.toString(), computation.toString());
         return result;
@@ -237,16 +235,11 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
     private OllirExprResult visitUnaryExpr(JmmNode node, Void unused) {
         StringBuilder computation = new StringBuilder();
 
-        // Get the operation
         String op = node.get("op");
 
-        // Visit the child expression
         var child = visit(node.getJmmChild(0));
-
-        // Code to compute the child
         computation.append(child.getComputation());
 
-        // Code to compute self
         String resOllirType = OptUtils.toOllirType(node,table);
         String code = op + resOllirType + SPACE + child.getCode();
 
