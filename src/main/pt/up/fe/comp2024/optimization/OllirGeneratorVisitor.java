@@ -45,6 +45,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         addVisit(PARAM, this::visitParam);
         addVisit(RETURN_STMT, this::visitReturn);
         addVisit(ASSIGN_STMT, this::visitAssignStmt);
+        addVisit(ARRAY_ASSIGN_STMT, this::visitArrayAssignStmt);
         addVisit(METHOD_CALL_EXPR, this::visitMethodCallExpr);
         addVisit(IMPORT_DECL, this::visitImportDecl);
         addVisit(EXPR_STMT, this::visitExprStmt);
@@ -106,6 +107,52 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         return code.toString();
     }
+
+    /*
+
+    SRC:
+    a[0] = 1;
+    SEMANTIC TREE:
+    ArrayAssignStmt (name: a)
+       IntegerLiteral (value: 0)
+       IntegerLiteral (value: 1)
+    OLLIR:
+    $1.a[0.i32].i32 :=.i32 1.i32;
+
+    */
+    private String visitArrayAssignStmt(JmmNode node, Void unused){
+        String varName = node.get("name");
+
+        var index = exprVisitor.visit(node.getJmmChild(0));
+        var value = exprVisitor.visit(node.getJmmChild(1));
+
+        StringBuilder code = new StringBuilder();
+
+        // code to compute the index
+        code.append(index.getComputation());
+
+        // code to compute the value
+        code.append(value.getComputation());
+
+        // code to compute self
+        String typeString = toOllirType(node.getJmmChild(1), table);
+
+        code.append(varName);
+        code.append("[");
+
+        code.append(index.getCode());
+        code.append("]");
+        code.append(typeString);
+        code.append(SPACE);
+        code.append(ASSIGN);
+        code.append(typeString);
+        code.append(SPACE);
+        code.append(value.getCode());
+        code.append(END_STMT);
+
+        return code.toString();
+    }
+
     private String visitReturn(JmmNode node, Void unused) {
         String typeString = toOllirType(node,table);
 

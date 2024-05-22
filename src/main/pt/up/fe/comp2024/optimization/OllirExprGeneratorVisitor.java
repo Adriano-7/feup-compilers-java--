@@ -38,6 +38,7 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         addVisit(UNARY_EXPR, this::visitUnaryExpr);
         addVisit(BOOLEAN_LITERAL, this::visitBooleanLiteral);
         addVisit(ARRAY_LENGTH_EXPR, this::visitArrayLengthExpr);
+        addVisit(ARRAY_ACCESS_EXPR, this::visitArrayAccessExpr);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -267,6 +268,20 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
                 .append(").i32;\n");
 
         return new OllirExprResult(temp, computation);
+    }
+
+    private OllirExprResult visitArrayAccessExpr(JmmNode node, Void unused){
+        StringBuilder computation = new StringBuilder();
+
+        OllirExprResult array = visit(node.getJmmChild(0));
+        OllirExprResult index = visit(node.getJmmChild(1));
+
+        computation.append(array.getComputation());
+        computation.append(index.getComputation());
+
+        String code = array.getCode() + "[" + index.getCode() + "]";
+
+        return new OllirExprResult(code, computation);
     }
 
     /**

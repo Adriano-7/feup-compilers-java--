@@ -34,7 +34,8 @@ public enum Kind {
     UNARY_EXPR,
     ARRAY_LENGTH_EXPR,
     BOOLEAN_TYPE,
-    INT_ARRAY_TYPE;
+    INT_ARRAY_TYPE,
+    ARRAY_ASSIGN_STMT;
 
 
     private static final Set<Kind> STATEMENTS = Set.of(ASSIGN_STMT, RETURN_STMT);
