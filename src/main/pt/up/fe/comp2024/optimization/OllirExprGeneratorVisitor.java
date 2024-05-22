@@ -270,18 +270,41 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         return new OllirExprResult(temp, computation);
     }
 
+    /*
+    Code:
+    		result = a[0];
+    Tree:
+        AssignStmt (name: result, isArray: false, type: int)
+            ArrayAccessExpr (isArray: true, type: int)
+               VarRefExpr (name: a, isArray: true, type: int)
+               IntegerLiteral (isArray: false, type: int, value: 0)
+    OLLIR we want to generate:
+            result.i32 :=.i32 $1.a[0.i32].i32;
+    */
     private OllirExprResult visitArrayAccessExpr(JmmNode node, Void unused){
-        StringBuilder computation = new StringBuilder();
+        StringBuilder code = new StringBuilder();
 
-        OllirExprResult array = visit(node.getJmmChild(0));
-        OllirExprResult index = visit(node.getJmmChild(1));
+        JmmNode arrayNode = node.getJmmChild(0);
+        JmmNode indexNode = node.getJmmChild(1);
 
-        computation.append(array.getComputation());
-        computation.append(index.getComputation());
+        String parameterIndex = OptUtils.getParameterNumber(arrayNode, table);
+        String arrayName = arrayNode.get("name");
+        String arrayType = OptUtils.toOllirType(arrayNode, table);
 
-        String code = array.getCode() + "[" + index.getCode() + "]";
+        OllirExprResult indexResult = visit(indexNode);
+        code.append(indexResult.getComputation());
 
-        return new OllirExprResult(code, computation);
+        code
+                .append(arrayType)
+                .append(parameterIndex)
+                .append(".")
+                .append(arrayName)
+                .append("[")
+                .append(indexResult.getCode())
+                .append("]")
+                .append(arrayType);
+
+        return new OllirExprResult(code.toString());
     }
 
     /**

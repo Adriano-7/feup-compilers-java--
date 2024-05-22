@@ -120,39 +120,43 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     $1.a[0.i32].i32 :=.i32 1.i32;
 
     */
-    private String visitArrayAssignStmt(JmmNode node, Void unused){
-        String varName = node.get("name");
+private String visitArrayAssignStmt(JmmNode node, Void unused){
+    String varName = node.get("name");
 
-        var index = exprVisitor.visit(node.getJmmChild(0));
-        var value = exprVisitor.visit(node.getJmmChild(1));
+    var index = exprVisitor.visit(node.getJmmChild(0));
+    var value = exprVisitor.visit(node.getJmmChild(1));
 
-        StringBuilder code = new StringBuilder();
+    StringBuilder code = new StringBuilder();
 
-        // code to compute the index
-        code.append(index.getComputation());
+    // code to compute the index
+    code.append(index.getComputation());
 
-        // code to compute the value
-        code.append(value.getComputation());
+    // code to compute the value
+    code.append(value.getComputation());
 
-        // code to compute self
-        String typeString = toOllirType(node.getJmmChild(1), table);
+    // code to compute self
+    String typeString = toOllirType(node.getJmmChild(1), table);
 
-        code.append(varName);
-        code.append("[");
+    // Use getParameterNumber to get the $1
+    String parameterNumber = OptUtils.getParameterNumber(node, table);
 
-        code.append(index.getCode());
-        code.append("]");
-        code.append(typeString);
-        code.append(SPACE);
-        code.append(ASSIGN);
-        code.append(typeString);
-        code.append(SPACE);
-        code.append(value.getCode());
-        code.append(END_STMT);
+    code.append(parameterNumber);
+    code.append(".");
+    code.append(varName);
+    code.append("[");
 
-        return code.toString();
-    }
+    code.append(index.getCode());
+    code.append("]");
+    code.append(typeString);
+    code.append(SPACE);
+    code.append(ASSIGN);
+    code.append(typeString);
+    code.append(SPACE);
+    code.append(value.getCode());
+    code.append(END_STMT);
 
+    return code.toString();
+}
     private String visitReturn(JmmNode node, Void unused) {
         String typeString = toOllirType(node,table);
 

@@ -1,6 +1,7 @@
 package pt.up.fe.comp2024.optimization;
 
 import org.specs.comp.ollir.Instruction;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
@@ -83,5 +84,21 @@ public class OptUtils {
         String label = prefix + "_" + labelCounter;
         labelCounter++;
         return label;
+    }
+
+    public static String getParameterNumber(JmmNode node, SymbolTable table){
+        JmmNode method = node.getParent();
+        while ( !method.getKind().equals("PublicStaticVoidMethodDecl") && !method.getKind().equals("PublicMethodDecl")) {
+            method = method.getParent();
+        }
+
+        List<Symbol> parameters = table.getParameters(method.get("name"));
+        for (int i = 0; i < parameters.size(); i++) {
+            if(parameters.get(i).getName().equals(node.get("name"))){
+                return "$" + (i+1);
+            }
+        }
+
+        return "";
     }
 }
