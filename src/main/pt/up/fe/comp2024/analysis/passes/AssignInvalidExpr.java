@@ -37,7 +37,7 @@ public class AssignInvalidExpr extends AnalysisVisitor {
         }
 
         if (table.getFields().stream().anyMatch(param -> param.getName().equals(assignStmt.get("name")))) {
-            if (parent.getKind().equals("PublicStaticVoidMethodDecl")) {
+            if (parent.getKind().equals("PublicStaticVoidMethodDecl") && !parent.get("name").equals("main")) {
                 var message = String.format("Cannot assign value to a field in a static method");
                 addReport(Report.newError(
                         Stage.SEMANTIC,
