@@ -140,8 +140,10 @@ private String visitArrayAssignStmt(JmmNode node, Void unused){
     // Use getParameterNumber to get the $1
     String parameterNumber = OptUtils.getParameterNumber(node, table);
 
-    code.append(parameterNumber);
-    code.append(".");
+    if(!parameterNumber.isEmpty()){
+        code.append(parameterNumber);
+        code.append(".");
+    }
     code.append(varName);
     code.append("[");
 

@@ -136,7 +136,13 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         var id = node.get("name");
         String ollirType = OptUtils.toOllirType(node,table);
 
-        String code = id + ollirType;
+        String parameterNumber = OptUtils.getParameterNumber(node, table);
+        String code;
+        if (!parameterNumber.isEmpty()) {
+            code = parameterNumber + "." + id + ollirType;
+        } else {
+            code = id + ollirType;
+        }
 
         return new OllirExprResult(code);
     }
@@ -289,20 +295,19 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         String parameterIndex = OptUtils.getParameterNumber(arrayNode, table);
         String arrayName = arrayNode.get("name");
-        String arrayType = OptUtils.toOllirType(arrayNode, table);
+        String arrayType = OptUtils.toOllirType(arrayNode, table, false);
 
         OllirExprResult indexResult = visit(indexNode);
         code.append(indexResult.getComputation());
 
-        code
-                .append(arrayType)
-                .append(parameterIndex)
-                .append(".")
-                .append(arrayName)
-                .append("[")
-                .append(indexResult.getCode())
-                .append("]")
-                .append(arrayType);
+        if(!parameterIndex.isEmpty()){
+            code.append(parameterIndex).append(".");
+        }
+        code.append(arrayName)
+        .append("[")
+        .append(indexResult.getCode())
+        .append("]")
+        .append(arrayType);
 
         return new OllirExprResult(code.toString());
     }

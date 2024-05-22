@@ -35,13 +35,16 @@ public class OptUtils {
         return tempNumber;
     }
 
-    public static String toOllirType(JmmNode typeNode, SymbolTable table) {
+    public static String toOllirType(JmmNode typeNode, SymbolTable table){
+        return toOllirType(typeNode, table, true);
+    }
+    public static String toOllirType(JmmNode typeNode, SymbolTable table, boolean showArray) {
         //TYPE.checkOrThrow(typeNode);
         Type type = TypeUtils.getExprType(typeNode, table);
 
         String result = ".";
 
-        if (type.isArray()) {
+        if (type.isArray() && showArray) {
             result += "array.";
         }
 
