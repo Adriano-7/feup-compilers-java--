@@ -55,6 +55,49 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         StringBuilder computation = new StringBuilder();
 
+        boolean lhsIsArrayAccess = node.getJmmChild(0).getKind().equals("ArrayAccessExpr");
+        boolean rhsIsArrayAccess = node.getJmmChild(1).getKind().equals("ArrayAccessExpr");
+
+        if (lhsIsArrayAccess || rhsIsArrayAccess) {
+            String lhsTemp = lhsIsArrayAccess ? OptUtils.getTemp() + OptUtils.toOllirType(node, table) : lhs.getCode();
+            if (lhsIsArrayAccess) {
+                computation.append(lhsTemp)
+                        .append(SPACE)
+                        .append(ASSIGN)
+                        .append(OptUtils.toOllirType(node, table))
+                        .append(SPACE)
+                        .append(lhs.getCode())
+                        .append(END_STMT);
+            }
+
+            String rhsTemp = rhsIsArrayAccess ? OptUtils.getTemp() + OptUtils.toOllirType(node, table) : rhs.getCode();
+            if (rhsIsArrayAccess) {
+                computation.append(rhsTemp)
+                        .append(SPACE)
+                        .append(ASSIGN)
+                        .append(OptUtils.toOllirType(node, table))
+                        .append(SPACE)
+                        .append(rhs.getCode())
+                        .append(END_STMT);
+            }
+
+            String resultTemp = OptUtils.getTemp() + OptUtils.toOllirType(node, table);
+            computation.append(resultTemp)
+                    .append(SPACE)
+                    .append(ASSIGN)
+                    .append(OptUtils.toOllirType(node, table))
+                    .append(SPACE)
+                    .append(lhsTemp)
+                    .append(SPACE)
+                    .append(node.get("op"))
+                    .append(OptUtils.toOllirType(node, table))
+                    .append(SPACE)
+                    .append(rhsTemp)
+                    .append(END_STMT);
+
+            return new OllirExprResult(resultTemp, computation);
+        }
+
         if (node.get("op").equals("&&")) {
             // Label for the short-circuit evaluation
             String trueLabel = OptUtils.getLabel("true");
