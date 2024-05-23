@@ -56,6 +56,27 @@ public class JasminGenerator {
         generators.put(CallInstruction.class, this::generateCall);
         generators.put(CondBranchInstruction.class, this::generateCondBranch);
         generators.put(GotoInstruction.class, this::generateGoto);
+        generators.put(UnaryOpInstruction.class, this::generateUnaryOp);
+    }
+
+    private String generateUnaryOp(UnaryOpInstruction unaryOpInstruction) {
+        var code = new StringBuilder();
+        Operation operation = unaryOpInstruction.getOperation();
+        code.append(generators.apply(unaryOpInstruction.getOperand()));
+
+        var op = switch (operation.getOpType()) {
+            case NOTB -> {
+                var temp = new StringBuilder();
+                temp.append("ifeq temp").append(temporaryVar).append("\niconst_0\ngoto temp").append(temporaryVar + 1);
+                temp.append("\ntemp").append(temporaryVar).append(":\niconst_1\ntemp").append(temporaryVar + 1).append(":").append(NL);
+                temporaryVar += 2;
+                yield temp.toString();
+            }
+            default -> throw new NotImplementedException(unaryOpInstruction.getOperation().getOpType());
+        };
+
+        code.append(op).append(NL);
+        return code.toString();
     }
 
     private String generateGoto(GotoInstruction gotoInstruction) {
@@ -464,8 +485,8 @@ public class JasminGenerator {
             case LTH -> {
                 var temp = new StringBuilder();
                 temp.append("isub\n");
-                temp.append("iflt temp").append(temporaryVar).append("\niconst_0\ngoto temp").append(temporaryVar + 1).append("\n");
-                temp.append("temp").append(temporaryVar).append(":\niconst_1\ntemp").append(temporaryVar + 1).append(":\n");
+                temp.append("iflt temp").append(temporaryVar).append("\niconst_0\ngoto temp").append(temporaryVar + 1).append(NL);
+                temp.append("temp").append(temporaryVar).append(":\niconst_1\ntemp").append(temporaryVar + 1).append(":").append(NL);
                 temporaryVar += 2;
                 yield temp.toString();
             }
