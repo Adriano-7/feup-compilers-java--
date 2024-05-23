@@ -178,10 +178,21 @@ public class JasminGenerator {
             code.append(instruction);
 
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
-            Operand className = (Operand) callInstruction.getOperands().get(0);
-            String importedClass = getClassName(className.getName());
-            code.append("new ").append(importedClass).append(NL);
-            code.append("dup").append(NL);
+            Operand operand = (Operand) callInstruction.getOperands().get(0);
+
+            if (operand.getType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
+                for (Element element : callInstruction.getArguments())
+                    code.append(generators.apply(element));
+                code.append("newarray int").append(NL);
+            }
+            else {
+                code.append("new ").append(operand.getName()).append(NL);
+                code.append("dup").append(NL);
+            }
+        } else if (callInstruction.getInvocationType().equals(CallType.arraylength)) {
+            Operand operand = (Operand) callInstruction.getOperands().get(0);
+            code.append(generators.apply(operand));
+            code.append("arraylength").append(NL);
         }
 
         return code.toString();
