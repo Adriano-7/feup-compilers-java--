@@ -202,7 +202,6 @@ public class JasminGenerator {
             }
             else {
                 code.append("new ").append(operand.getName()).append(NL);
-                code.append("dup").append(NL);
             }
         } else if (callInstruction.getInvocationType().equals(CallType.arraylength)) {
             Operand operand = (Operand) callInstruction.getOperands().get(0);
@@ -465,9 +464,8 @@ public class JasminGenerator {
     private String generateLiteral(LiteralElement literal) {
         int val = Integer.parseInt(literal.getLiteral());
 
-        if (val > -2 && val < 6){
+        if (val > -2 && val < 6)
             return "iconst_" + literal.getLiteral() + NL;
-        }
         else if (val > -129 && val < 128)
             return "bipush " + literal.getLiteral() + NL;
         else if (val > -32769 && val < 32768)
