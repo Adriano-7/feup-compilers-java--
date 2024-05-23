@@ -16,11 +16,9 @@ import static pt.up.fe.comp2024.optimization.OptUtils.toOllirType;
  * Generates OLLIR code from JmmNodes that are expressions.
  */
 public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult> {
-
     private static final String SPACE = " ";
     private static final String ASSIGN = ":=";
     private final String END_STMT = ";\n";
-
     private final SymbolTable table;
 
     public OllirExprGeneratorVisitor(SymbolTable table) {
@@ -42,7 +40,6 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         setDefaultVisit(this::defaultVisit);
     }
-
 
     private OllirExprResult visitInteger(JmmNode node, Void unused) {
         String code = node.get("value") + OptUtils.toOllirType("int");
@@ -173,8 +170,6 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         return new OllirExprResult(code, computation);
     }
 
-
-
     private OllirExprResult visitVarRef(JmmNode node, Void unused) {
         var id = node.get("name");
         String ollirType = OptUtils.toOllirType(node,table);
@@ -236,8 +231,7 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
             argsString = "";
         }
 
-        code
-            .append(invokeType)
+        code.append(invokeType)
             .append("(")
             .append(callerName)
             .append(".")
@@ -262,8 +256,17 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         String temp = OptUtils.getTemp() + OptUtils.toOllirType(node,table);
 
-        computation.append(temp).append(SPACE).append(ASSIGN).append(OptUtils.toOllirType(node,table)).append(SPACE).append(newObj).append(END_STMT);
-        computation.append("invokespecial(").append(temp).append(",\"<init>\").V;\n");
+        computation
+                .append(temp)
+                .append(SPACE)
+                .append(ASSIGN)
+                .append(OptUtils.toOllirType(node,table))
+                .append(SPACE)
+                .append(newObj)
+                .append(END_STMT)
+                .append("invokespecial(")
+                .append(temp)
+                .append(",\"<init>\").V;\n");
 
         return new OllirExprResult(temp, computation);
     }
@@ -277,7 +280,15 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
 
         String temp = OptUtils.getTemp() + type;
 
-        computation.append(temp).append(SPACE).append(ASSIGN).append(type).append(SPACE).append("new(array,").append(size).append(")").append(type).append(END_STMT);
+        computation.append(temp)
+                    .append(SPACE)
+                    .append(ASSIGN)
+                    .append(type)
+                    .append(SPACE)
+                    .append("new(array,")
+                    .append(size).append(")")
+                    .append(type)
+                    .append(END_STMT);
 
         return new OllirExprResult(temp, computation);
     }
@@ -330,29 +341,28 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
     OLLIR we want to generate:
             result.i32 :=.i32 $1.a[0.i32].i32;
     */
-    private OllirExprResult visitArrayAccessExpr(JmmNode node, Void unused){
+    private OllirExprResult visitArrayAccessExpr(JmmNode node, Void unused) {
         StringBuilder code = new StringBuilder();
 
         JmmNode arrayNode = node.getJmmChild(0);
         JmmNode indexNode = node.getJmmChild(1);
 
-        String parameterIndex = OptUtils.getParameterNumber(arrayNode, table);
-        String arrayName = arrayNode.get("name");
-        String arrayType = OptUtils.toOllirType(arrayNode, table, false);
-
+        OllirExprResult arrayResult = visit(arrayNode);
         OllirExprResult indexResult = visit(indexNode);
+
+        code.append(arrayResult.getComputation());
         code.append(indexResult.getComputation());
 
-        if(!parameterIndex.isEmpty()){
-            code.append(parameterIndex).append(".");
-        }
-        code.append(arrayName)
-        .append("[")
-        .append(indexResult.getCode())
-        .append("]")
-        .append(arrayType);
+        String arrayName = "temp" + OptUtils.getNextTempNum() + OptUtils.toOllirType(arrayNode, table);
+        code.append(arrayName).append(" :=").append(OptUtils.toOllirType(arrayNode, table)).append(" ").append(arrayResult.getCode()).append(END_STMT);
 
-        return new OllirExprResult(code.toString());
+        String indexTemp = "temp" + OptUtils.getNextTempNum() + OptUtils.toOllirType(indexNode, table);
+        code.append(indexTemp).append(" :=").append(OptUtils.toOllirType(indexNode, table)).append(" ").append(indexResult.getCode()).append(END_STMT);
+
+        String resultTemp = "temp" + OptUtils.getNextTempNum() + OptUtils.toOllirType(node, table);
+        code.append(resultTemp).append(" :=").append(OptUtils.toOllirType(node, table)).append(" ").append(arrayName).append("[").append(indexTemp).append("]").append(OptUtils.toOllirType(node, table)).append(END_STMT);
+
+        return new OllirExprResult(resultTemp, code);
     }
 
     /**

@@ -28,14 +28,12 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
 
     private final SymbolTable table;
-
     private final OllirExprGeneratorVisitor exprVisitor;
 
     public OllirGeneratorVisitor(SymbolTable table) {
         this.table = table;
         exprVisitor = new OllirExprGeneratorVisitor(table);
     }
-
 
     @Override
     protected void buildVisitor() {
@@ -58,20 +56,14 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     private String visitAssignStmt(JmmNode node, Void unused) {
         String varName = node.get("name");
 
-
         var rhs = exprVisitor.visit(node.getJmmChild(0));
         StringBuilder code = new StringBuilder();
 
-        // code to compute the rhs
         code.append(rhs.getComputation());
-
-        // code to compute self
         String typeString = toOllirType(node.getJmmChild(0), table);
 
-        // Get the type of the lhs variable
         String lhsType = toOllirType(node,table);
         if(rhs.getCode().contains("invoke")){
-            //Store in a temporary variable
             String temp = OptUtils.getTemp() + typeString;
             code.append(temp);
             code.append(SPACE);
@@ -82,7 +74,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
             code.append(END_STMT);
 
             code.append(varName);
-            code.append(lhsType); // Add the type of the lhs variable
+            code.append(lhsType);
             code.append(SPACE);
             code.append(ASSIGN);
             code.append(typeString);
@@ -120,45 +112,39 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     $1.a[0.i32].i32 :=.i32 1.i32;
 
     */
-private String visitArrayAssignStmt(JmmNode node, Void unused){
-    String varName = node.get("name");
+    private String visitArrayAssignStmt(JmmNode node, Void unused){
+        String varName = node.get("name");
 
-    var index = exprVisitor.visit(node.getJmmChild(0));
-    var value = exprVisitor.visit(node.getJmmChild(1));
+        var index = exprVisitor.visit(node.getJmmChild(0));
+        var value = exprVisitor.visit(node.getJmmChild(1));
 
-    StringBuilder code = new StringBuilder();
+        StringBuilder code = new StringBuilder();
 
-    // code to compute the index
-    code.append(index.getComputation());
+        code.append(index.getComputation());
+        code.append(value.getComputation());
 
-    // code to compute the value
-    code.append(value.getComputation());
+        String typeString = toOllirType(node.getJmmChild(1), table);
+        String parameterNumber = OptUtils.getParameterNumber(node, table);
 
-    // code to compute self
-    String typeString = toOllirType(node.getJmmChild(1), table);
+        if(!parameterNumber.isEmpty()){
+            code.append(parameterNumber);
+            code.append(".");
+        }
+        code.append(varName);
+        code.append("[");
 
-    // Use getParameterNumber to get the $1
-    String parameterNumber = OptUtils.getParameterNumber(node, table);
+        code.append(index.getCode());
+        code.append("]");
+        code.append(typeString);
+        code.append(SPACE);
+        code.append(ASSIGN);
+        code.append(typeString);
+        code.append(SPACE);
+        code.append(value.getCode());
+        code.append(END_STMT);
 
-    if(!parameterNumber.isEmpty()){
-        code.append(parameterNumber);
-        code.append(".");
+        return code.toString();
     }
-    code.append(varName);
-    code.append("[");
-
-    code.append(index.getCode());
-    code.append("]");
-    code.append(typeString);
-    code.append(SPACE);
-    code.append(ASSIGN);
-    code.append(typeString);
-    code.append(SPACE);
-    code.append(value.getCode());
-    code.append(END_STMT);
-
-    return code.toString();
-}
     private String visitReturn(JmmNode node, Void unused) {
         String typeString = toOllirType(node,table);
 
@@ -224,7 +210,8 @@ private String visitArrayAssignStmt(JmmNode node, Void unused){
         String retType = "";
         if (name.equals("main")) {
             retType = ".V";
-        }else if (node.getNumChildren() > 0) {
+        }
+        else if (node.getNumChildren() > 0) {
             retType = toOllirType(node.getJmmChild(0),table);
         }
 
@@ -405,12 +392,12 @@ private String visitArrayAssignStmt(JmmNode node, Void unused){
         code.append("goto ").append(falseLabel).append(";\n");
 
         code.append(trueLabel).append(":\n");
-        code.append(visitIfElseBranch(node.getJmmChild(1))); // Visit the true branch
+        code.append(visitIfElseBranch(node.getJmmChild(1)));
 
         code.append(falseLabel).append(":\n");
-        code.append(visitIfElseBranch(node.getJmmChild(2))); // Visit the false branch
+        code.append(visitIfElseBranch(node.getJmmChild(2)));
 
-        code.append(endLabel).append(":\n"); // End label
+        code.append(endLabel).append(":\n");
 
         return code.toString();
     }
@@ -432,28 +419,23 @@ private String visitArrayAssignStmt(JmmNode node, Void unused){
     private String visitWhileStmt(JmmNode node, Void unused) {
         StringBuilder code = new StringBuilder();
 
-        // Generate a label for the loop condition
         String conditionLabel = OptUtils.getLabel("loop_condition");
         code.append(conditionLabel).append(":\n");
 
-        // Visit the condition expression
         JmmNode condition = node.getJmmChild(0);
         OllirExprResult conditionResult = exprVisitor.visit(condition);
         code.append(conditionResult.getComputation());
 
-        // Generate code for the condition
         code.append("if (");
         code.append(conditionResult.getCode());
         code.append(") goto loop_body;\n");
         code.append("goto loop_end;\n");
 
-        // Generate a label for the loop body
         String bodyLabel = OptUtils.getLabel("loop_body");
         code.append(bodyLabel).append(":\n");
-        code.append(visit(node.getJmmChild(1))); // Visit the loop body
-        code.append("goto ").append(conditionLabel).append(";\n"); // Jump back to the condition
+        code.append(visit(node.getJmmChild(1)));
+        code.append("goto ").append(conditionLabel).append(";\n");
 
-        // Generate a label for the end of the loop
         String endLabel = OptUtils.getLabel("loop_end");
         code.append(endLabel).append(":\n");
 
@@ -468,7 +450,6 @@ private String visitArrayAssignStmt(JmmNode node, Void unused){
      * @return
      */
     private String defaultVisit(JmmNode node, Void unused) {
-
         for (var child : node.getChildren()) {
             visit(child);
         }

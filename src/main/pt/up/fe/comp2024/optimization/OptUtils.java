@@ -20,17 +20,14 @@ public class OptUtils {
 
 
     public static String getTemp() {
-
         return getTemp("tmp");
     }
 
     public static String getTemp(String prefix) {
-
         return prefix + getNextTempNum();
     }
 
     public static int getNextTempNum() {
-
         tempNumber += 1;
         return tempNumber;
     }
@@ -39,7 +36,6 @@ public class OptUtils {
         return toOllirType(typeNode, table, true);
     }
     public static String toOllirType(JmmNode typeNode, SymbolTable table, boolean showArray) {
-        //TYPE.checkOrThrow(typeNode);
         Type type = TypeUtils.getExprType(typeNode, table);
 
         String result = ".";
