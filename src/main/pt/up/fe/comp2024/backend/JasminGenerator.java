@@ -96,6 +96,8 @@ public class JasminGenerator {
 
     private String generateCondBranch(CondBranchInstruction condBranchInstruction) {
         var code = new StringBuilder();
+        code.append(checkForLabels(condBranchInstruction));
+
         if (condBranchInstruction instanceof OpCondInstruction opCondInstruction) {
             code.append(generators.apply(opCondInstruction.getCondition()));
 
@@ -119,12 +121,7 @@ public class JasminGenerator {
 
     private String generateCall(CallInstruction callInstruction) {
         var code = new StringBuilder();
-
-        for (String label : currentMethod.getLabels().keySet()) {
-            if (currentMethod.getLabels().get(label).equals(callInstruction)){
-                code.append(label).append(":").append(NL);
-            }
-        }
+        code.append(checkForLabels(callInstruction));
 
         if (callInstruction.getInvocationType().equals(CallType.invokespecial)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -409,12 +406,7 @@ public class JasminGenerator {
 
     private String generateAssign(AssignInstruction assign) {
         var code = new StringBuilder();
-
-        for (String label : currentMethod.getLabels().keySet()) {
-            if (currentMethod.getLabels().get(label).equals(assign)){
-                code.append(label).append(":").append(NL);
-            }
-        }
+        code.append(checkForLabels(assign));
 
         // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
@@ -520,12 +512,7 @@ public class JasminGenerator {
 
     private String generateReturn(ReturnInstruction returnInst) {
         var code = new StringBuilder();
-
-        for (String label : currentMethod.getLabels().keySet()) {
-            if (currentMethod.getLabels().get(label).equals(returnInst)){
-                code.append(label).append(":").append(NL);
-            }
-        }
+        code.append(checkForLabels(returnInst));
 
         if (returnInst.hasReturnValue()){
             code.append(generators.apply(returnInst.getOperand()));
@@ -539,6 +526,16 @@ public class JasminGenerator {
         else
             code.append("areturn").append(NL);
 
+        return code.toString();
+    }
+
+    private String checkForLabels(Instruction instruction){
+        var code = new StringBuilder();
+        for (String label : currentMethod.getLabels().keySet()) {
+            if (currentMethod.getLabels().get(label).equals(instruction)){
+                code.append(label).append(":").append(NL);
+            }
+        }
         return code.toString();
     }
 
