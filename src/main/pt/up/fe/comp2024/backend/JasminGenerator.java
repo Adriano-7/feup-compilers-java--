@@ -11,7 +11,6 @@ import pt.up.fe.specs.util.utilities.StringLines;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +32,8 @@ public class JasminGenerator {
     Method currentMethod;
 
     private final FunctionClassMap<TreeNode, String> generators;
+
+    private int temporaryVar = 0;
 
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
@@ -93,6 +94,12 @@ public class JasminGenerator {
 
     private String generateCall(CallInstruction callInstruction) {
         var code = new StringBuilder();
+
+        for (String label : currentMethod.getLabels().keySet()) {
+            if (currentMethod.getLabels().get(label).equals(callInstruction)){
+                code.append(label).append(":").append(NL);
+            }
+        }
 
         if (callInstruction.getInvocationType().equals(CallType.invokespecial)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -454,6 +461,14 @@ public class JasminGenerator {
             case AND -> opPrefix + "and";
             case OR -> opPrefix + "or";
             case XOR -> opPrefix + "xor";
+            case LTH -> {
+                var temp = new StringBuilder();
+                temp.append("isub\n");
+                temp.append("iflt temp").append(temporaryVar).append("\niconst_0\ngoto temp").append(temporaryVar + 1).append("\n");
+                temp.append("temp").append(temporaryVar).append(":\niconst_1\ntemp").append(temporaryVar + 1).append(":\n");
+                temporaryVar += 2;
+                yield temp.toString();
+            }
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
@@ -464,6 +479,12 @@ public class JasminGenerator {
 
     private String generateReturn(ReturnInstruction returnInst) {
         var code = new StringBuilder();
+
+        for (String label : currentMethod.getLabels().keySet()) {
+            if (currentMethod.getLabels().get(label).equals(returnInst)){
+                code.append(label).append(":").append(NL);
+            }
+        }
 
         if (returnInst.hasReturnValue()){
             code.append(generators.apply(returnInst.getOperand()));
