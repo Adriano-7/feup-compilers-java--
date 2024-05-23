@@ -67,8 +67,12 @@ public class JasminGenerator {
         var op = switch (operation.getOpType()) {
             case NOTB -> {
                 var temp = new StringBuilder();
-                temp.append("ifeq temp").append(temporaryVar).append("\niconst_0\ngoto temp").append(temporaryVar + 1);
-                temp.append("\ntemp").append(temporaryVar).append(":\niconst_1\ntemp").append(temporaryVar + 1).append(":").append(NL);
+                temp.append("ifeq temp").append(temporaryVar).append(NL)
+                        .append("iconst_0").append(NL)
+                        .append("goto temp").append(temporaryVar + 1).append(NL)
+                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("iconst_1").append(NL)
+                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
                 temporaryVar += 2;
                 yield temp.toString();
             }
@@ -484,9 +488,25 @@ public class JasminGenerator {
             case XOR -> opPrefix + "xor";
             case LTH -> {
                 var temp = new StringBuilder();
-                temp.append("isub\n");
-                temp.append("iflt temp").append(temporaryVar).append("\niconst_0\ngoto temp").append(temporaryVar + 1).append(NL);
-                temp.append("temp").append(temporaryVar).append(":\niconst_1\ntemp").append(temporaryVar + 1).append(":").append(NL);
+                temp.append("isub").append(NL)
+                        .append("iflt temp").append(temporaryVar).append(NL)
+                        .append("iconst_0").append(NL)
+                        .append("goto temp").append(temporaryVar + 1).append(NL)
+                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("iconst_1").append(NL)
+                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
+                temporaryVar += 2;
+                yield temp.toString();
+            }
+            case GTE -> {
+                var temp = new StringBuilder();
+                temp.append("isub").append(NL)
+                        .append("ifge temp").append(temporaryVar).append(NL)
+                        .append("iconst_0").append(NL)
+                        .append("goto temp").append(temporaryVar + 1).append(NL)
+                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("iconst_1").append(NL)
+                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
                 temporaryVar += 2;
                 yield temp.toString();
             }
