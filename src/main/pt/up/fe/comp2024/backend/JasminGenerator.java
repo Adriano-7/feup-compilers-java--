@@ -57,6 +57,21 @@ public class JasminGenerator {
         generators.put(CondBranchInstruction.class, this::generateCondBranch);
         generators.put(GotoInstruction.class, this::generateGoto);
         generators.put(UnaryOpInstruction.class, this::generateUnaryOp);
+        generators.put(ArrayOperand.class, this::generateArrayOperand);
+    }
+
+    private String generateArrayOperand(ArrayOperand arrayOperand) {
+        var code = new StringBuilder();
+        int val = currentMethod.getVarTable().get(arrayOperand.getName()).getVirtualReg();
+        if (val < 4)
+            code.append("aload_" + val).append(NL);
+        else
+            code.append("aload " + val).append(NL);
+
+        for (Element element : arrayOperand.getIndexOperands())
+            code.append(generators.apply(element));
+
+        return code.toString();
     }
 
     private String generateUnaryOp(UnaryOpInstruction unaryOpInstruction) {
@@ -415,22 +430,21 @@ public class JasminGenerator {
         var code = new StringBuilder();
         code.append(checkForLabels(assign));
 
+        if (assign.getDest() instanceof ArrayOperand arrayOperand){
+            code.append(generators.apply(arrayOperand));
+        }
+
         // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
 
-        // store value in the stack in destination
-        var lhs = assign.getDest();
-
-        if (!(lhs instanceof Operand)) {
-            throw new NotImplementedException(lhs.getClass());
-        }
-
-        var operand = (Operand) lhs;
-
         // get register
+        var operand = (Operand) assign.getDest();
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
 
-        if (reg < 4){
+        if (assign.getDest() instanceof ArrayOperand){
+            code.append("iastore").append(NL);
+        }
+        else if (reg < 4){
             code.append(getPrefix(operand.getType())).append("store_").append(reg).append(NL);
         }else{
             code.append(getPrefix(operand.getType())).append("store ").append(reg).append(NL);
@@ -440,7 +454,12 @@ public class JasminGenerator {
     }
 
     private String generateSingleOp(SingleOpInstruction singleOp) {
-        return generators.apply(singleOp.getSingleOperand());
+        var code = new StringBuilder();
+        code.append(generators.apply(singleOp.getSingleOperand()));
+        if (singleOp.getSingleOperand() instanceof ArrayOperand) {
+            code.append("iaload").append(NL);
+        }
+        return code.toString();
     }
 
     private String generateLiteral(LiteralElement literal) {
@@ -448,7 +467,6 @@ public class JasminGenerator {
 
         if (val > -2 && val < 6){
             return "iconst_" + literal.getLiteral() + NL;
-
         }
         else if (val > -129 && val < 128)
             return "bipush " + literal.getLiteral() + NL;
