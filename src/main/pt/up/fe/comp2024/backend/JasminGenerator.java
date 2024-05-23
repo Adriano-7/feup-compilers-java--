@@ -85,12 +85,8 @@ public class JasminGenerator {
 
     private String generateGoto(GotoInstruction gotoInstruction) {
         var code = new StringBuilder();
+        code.append(checkForLabels(gotoInstruction));
         code.append("goto ").append(gotoInstruction.getLabel()).append(NL);
-        var labels = currentMethod.getLabels();
-        for (String label : labels.keySet()) {
-            if (labels.get(label).equals(gotoInstruction))
-                code.append(label).append(":").append(NL);
-        }
         return code.toString();
     }
 
@@ -494,6 +490,18 @@ public class JasminGenerator {
                 var temp = new StringBuilder();
                 temp.append("isub").append(NL)
                         .append("ifge temp").append(temporaryVar).append(NL)
+                        .append("iconst_0").append(NL)
+                        .append("goto temp").append(temporaryVar + 1).append(NL)
+                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("iconst_1").append(NL)
+                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
+                temporaryVar += 2;
+                yield temp.toString();
+            }
+            case LTE -> {
+                var temp = new StringBuilder();
+                temp.append("isub").append(NL)
+                        .append("ifle temp").append(temporaryVar).append(NL)
                         .append("iconst_0").append(NL)
                         .append("goto temp").append(temporaryVar + 1).append(NL)
                         .append("temp").append(temporaryVar).append(":").append(NL)
