@@ -37,7 +37,7 @@ public class TypeUtils {
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             case NEW_OBJECT_EXPR -> new Type(expr.get("name"), false);
-            case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> getUnspecifiedTypeNewArrayExprType(expr, table);
+            case UNSPECIFIED_TYPE_NEW_ARRAY_EXPR -> new Type(INT_TYPE_NAME, true);
             case METHOD_CALL_EXPR -> getMethodCallExprType(expr, table);
             case SPECIFIC_TYPE_NEW_ARRAY_EXPR -> new Type(INT_TYPE_NAME, true);
             case THIS_EXPR -> getThisExprType(expr, table);
@@ -117,11 +117,6 @@ public class TypeUtils {
         }
 
         return null;
-    }
-
-    private static Type getUnspecifiedTypeNewArrayExprType(JmmNode unspecifiedTypeNewArrayExpr, SymbolTable table) {
-        JmmNode assignStmt = unspecifiedTypeNewArrayExpr.getParent();
-        return getVarExprType(assignStmt, table);
     }
 
     public static Type getOptionalType(JmmNode node) {

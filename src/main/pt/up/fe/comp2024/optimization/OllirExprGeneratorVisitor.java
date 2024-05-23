@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp2024.ast.TypeUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static pt.up.fe.comp2024.ast.Kind.*;
 import static pt.up.fe.comp2024.optimization.OptUtils.toOllirType;
@@ -33,10 +34,13 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
         addVisit(METHOD_CALL_EXPR, this::visitMethodCall);
         addVisit(NEW_OBJECT_EXPR, this::visitNewObjectExpr);
         addVisit(SPECIFIC_TYPE_NEW_ARRAY_EXPR, this::visitNewArrayObjectExpr);
+        addVisit(UNSPECIFIED_TYPE_NEW_ARRAY_EXPR, this::visitUnspecifiedTypeNewArrayExpr);
+
         addVisit(UNARY_EXPR, this::visitUnaryExpr);
         addVisit(BOOLEAN_LITERAL, this::visitBooleanLiteral);
         addVisit(ARRAY_LENGTH_EXPR, this::visitArrayLengthExpr);
         addVisit(ARRAY_ACCESS_EXPR, this::visitArrayAccessExpr);
+
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -291,6 +295,30 @@ public class OllirExprGeneratorVisitor extends AJmmVisitor<Void, OllirExprResult
                     .append(END_STMT);
 
         return new OllirExprResult(temp, computation);
+    }
+
+    private OllirExprResult visitUnspecifiedTypeNewArrayExpr(JmmNode node, Void unused) {
+        StringBuilder code = new StringBuilder();
+
+        List<JmmNode> values = node.getChildren();
+        int size = values.size();
+
+        String arrayType = OptUtils.toOllirType(node, table);
+        String tempArray = OptUtils.getTemp() + arrayType;
+        code.append(tempArray).append(" :=").append(arrayType).append(" new(array, ").append(size).append(".i32)").append(arrayType).append(END_STMT);
+
+        for (int i = 0; i < size; i++) {
+            JmmNode value = values.get(i);
+            OllirExprResult valueResult = visit(value);
+            code.append(valueResult.getComputation());
+
+            String indexTemp = OptUtils.getTemp() + ".i32";
+            code.append(indexTemp).append(" :=.i32 ").append(i).append(".i32").append(END_STMT);
+
+            code.append(tempArray).append("[").append(indexTemp).append("]").append(OptUtils.toOllirType(value, table)).append(" :=").append(OptUtils.toOllirType(value, table)).append(" ").append(valueResult.getCode()).append(END_STMT);
+        }
+
+        return new OllirExprResult(tempArray, code);
     }
 
     private OllirExprResult visitUnaryExpr(JmmNode node, Void unused) {

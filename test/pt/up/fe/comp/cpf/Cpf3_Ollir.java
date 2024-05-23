@@ -267,7 +267,6 @@ public class Cpf3_Ollir {
     public void section4_Arrays_VarargsAndArrayInit() {
         var result = getOllirResult("arrays/VarargsAndArrayInit.jmm");
 
-
         var method = CpUtils.getMethod(result, "bar");
 
         var calls = CpUtils.getInstructions(CallInstruction.class, method);
