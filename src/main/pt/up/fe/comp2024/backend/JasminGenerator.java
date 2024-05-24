@@ -5,8 +5,10 @@ import org.specs.comp.ollir.tree.TreeNode;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.classmap.FunctionClassMap;
+import pt.up.fe.specs.util.collections.HashSetString;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 import pt.up.fe.specs.util.utilities.StringLines;
+import pt.up.fe.specs.util.utilities.Table;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +35,10 @@ public class JasminGenerator {
 
     private final FunctionClassMap<TreeNode, String> generators;
 
-    private int temporaryVar = 0;
+    private int temporaryLabel = 0;
+
+    private int loadsMax = 0;
+    private int localsMax = 0;
 
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
@@ -63,6 +68,7 @@ public class JasminGenerator {
     private String generateArrayOperand(ArrayOperand arrayOperand) {
         var code = new StringBuilder();
         int val = currentMethod.getVarTable().get(arrayOperand.getName()).getVirtualReg();
+        localsMax = Math.max(localsMax, val);
         if (val < 4)
             code.append("aload_" + val).append(NL);
         else
@@ -82,19 +88,21 @@ public class JasminGenerator {
         var op = switch (operation.getOpType()) {
             case NOTB -> {
                 var temp = new StringBuilder();
-                temp.append("ifeq temp").append(temporaryVar).append(NL)
+                temp.append("ifeq temp").append(temporaryLabel).append(NL)
                         .append("iconst_0").append(NL)
-                        .append("goto temp").append(temporaryVar + 1).append(NL)
-                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("goto temp").append(temporaryLabel + 1).append(NL)
+                        .append("temp").append(temporaryLabel).append(":").append(NL)
                         .append("iconst_1").append(NL)
-                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
-                temporaryVar += 2;
+                        .append("temp").append(temporaryLabel + 1).append(":").append(NL);
+                temporaryLabel += 2;
                 yield temp.toString();
             }
             default -> throw new NotImplementedException(unaryOpInstruction.getOperation().getOpType());
         };
 
         code.append(op).append(NL);
+
+        loadsMax = Math.max(loadsMax, 1);
         return code.toString();
     }
 
@@ -149,6 +157,9 @@ public class JasminGenerator {
                 String importedClass = getClassName(classType.getName());
                 code.append("invokespecial ").append(importedClass).append("/<init>()V").append(NL);
             }
+
+            loadsMax = Math.max(loadsMax, 1);
+
         } else if (callInstruction.getInvocationType().equals(CallType.invokestatic)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
             LiteralElement method = (LiteralElement) callInstruction.getOperands().get(1);
@@ -168,6 +179,8 @@ public class JasminGenerator {
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName()));
             instruction.append(NL);
             code.append(instruction);
+
+            loadsMax = Math.max(loadsMax, callInstruction.getOperands().size());
 
         } else if (callInstruction.getInvocationType().equals(CallType.invokevirtual)) {
             Operand className = (Operand) callInstruction.getOperands().get(0);
@@ -192,6 +205,8 @@ public class JasminGenerator {
             instruction.append(getDescriptor(callInstruction.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
             code.append(instruction);
 
+            loadsMax = Math.max(loadsMax, 1 + callInstruction.getOperands().size());
+
         } else if (callInstruction.getInvocationType().equals(CallType.NEW)) {
             Operand operand = (Operand) callInstruction.getOperands().get(0);
 
@@ -199,6 +214,7 @@ public class JasminGenerator {
                 for (Element element : callInstruction.getArguments())
                     code.append(generators.apply(element));
                 code.append("newarray int").append(NL);
+                loadsMax = Math.max(loadsMax, callInstruction.getOperands().size());
             }
             else {
                 code.append("new ").append(operand.getName()).append(NL);
@@ -207,6 +223,7 @@ public class JasminGenerator {
             Operand operand = (Operand) callInstruction.getOperands().get(0);
             code.append(generators.apply(operand));
             code.append("arraylength").append(NL);
+            loadsMax = Math.max(loadsMax, 1);
         }
 
         return code.toString();
@@ -227,6 +244,7 @@ public class JasminGenerator {
         code.append("putfield ").append(importedClass).append("/").append(operand2.getName()).append(" ");
         code.append(getDescriptor(element3.getType(), ollirClassName)).append(NL);
 
+        loadsMax = Math.max(loadsMax, 2);
         return code.toString();
     }
 
@@ -243,6 +261,7 @@ public class JasminGenerator {
         code.append("getfield ").append(importedClass).append("/").append(operand2.getName()).append(" ");
         code.append(getDescriptor(operand2.getType(), ollirClassName)).append(NL);
 
+        loadsMax = Math.max(loadsMax, 1);
         return code.toString();
     }
 
@@ -325,6 +344,8 @@ public class JasminGenerator {
         var defaultConstructor = """
                 ;default constructor
                 .method public <init>()V
+                    .limit stack 2
+                    .limit locals 1
                     aload_0
                     invokespecial java/lang/Object/<init>()V
                     return
@@ -335,6 +356,8 @@ public class JasminGenerator {
             code.append(defaultConstructor);
         else{
             code.append(".method public <init>()V").append(NL);
+            code.append(TAB).append(".limit stack 2").append(NL);
+            code.append(TAB).append(".limit locals 1").append(NL);
             code.append(TAB).append("aload_0").append(NL);
             code.append(TAB).append("invokespecial ").append(getClassName(ollirClass.getSuperClass())).append("/<init>()V").append(NL);
             code.append(TAB).append("return").append(NL);
@@ -346,6 +369,7 @@ public class JasminGenerator {
     private String generateClassMethods(){
         var code = new StringBuilder();
         for (Method method : ollirResult.getOllirClass().getMethods()) {
+            localsMax = 1;
             if (method.isConstructMethod()) {
                 continue;
             }
@@ -405,19 +429,28 @@ public class JasminGenerator {
         }
 
         code.append(")").append(getDescriptor(method.getReturnType(), ollirResult.getOllirClass().getClassName())).append(NL);
-
-        // Add limits
-        code.append(TAB).append(".limit stack 99").append(NL);
-        code.append(TAB).append(".limit locals 99").append(NL);
+        loadsMax = 0;
+        var instructions = new StringBuilder();
 
         for (var inst : method.getInstructions()) {
             var instCode = StringLines.getLines(generators.apply(inst)).stream()
                     .collect(Collectors.joining(NL + TAB, TAB, NL));
 
-            code.append(instCode);
+            instructions.append(instCode);
         }
 
-        code.append(".end method\n");
+        instructions.append(".end method\n");
+
+        if (!method.isConstructMethod()) {
+            localsMax = Math.max(localsMax, method.getParams().size());
+            localsMax += 1;
+        }
+
+        // Add limits
+        System.out.println("STACKKK LOADS: " + loadsMax);
+        code.append(TAB).append(".limit stack ").append(loadsMax + 1).append(NL);
+        code.append(TAB).append(".limit locals ").append(localsMax).append(NL);
+        code.append(instructions);
 
         // unset method
         currentMethod = null;
@@ -431,14 +464,22 @@ public class JasminGenerator {
 
         if (assign.getDest() instanceof ArrayOperand arrayOperand){
             code.append(generators.apply(arrayOperand));
+            loadsMax = Math.max(loadsMax, 1);
         }
 
+        assign.getRhs().addPred(assign);
         // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
+
+        if( assign.getRhs().getInstType().equals(InstructionType.BINARYOPER))
+            loadsMax = Math.max(loadsMax, 3);
+        else
+            loadsMax = Math.max(loadsMax, 2);
 
         // get register
         var operand = (Operand) assign.getDest();
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
+        localsMax = Math.max(localsMax, reg);
 
         if (assign.getDest() instanceof ArrayOperand){
             code.append("iastore").append(NL);
@@ -457,6 +498,7 @@ public class JasminGenerator {
         code.append(generators.apply(singleOp.getSingleOperand()));
         if (singleOp.getSingleOperand() instanceof ArrayOperand) {
             code.append("iaload").append(NL);
+            loadsMax = Math.max(loadsMax, 1);
         }
         return code.toString();
     }
@@ -477,6 +519,7 @@ public class JasminGenerator {
     private String generateOperand(Operand operand) {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
+        localsMax = Math.max(localsMax, reg);
         if (reg < 4)
             return getPrefix(operand.getType()) + "load_" + reg + "\n";
         else
@@ -504,37 +547,37 @@ public class JasminGenerator {
             case LTH -> {
                 var temp = new StringBuilder();
                 temp.append("isub").append(NL)
-                        .append("iflt temp").append(temporaryVar).append(NL)
+                        .append("iflt temp").append(temporaryLabel).append(NL)
                         .append("iconst_0").append(NL)
-                        .append("goto temp").append(temporaryVar + 1).append(NL)
-                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("goto temp").append(temporaryLabel + 1).append(NL)
+                        .append("temp").append(temporaryLabel).append(":").append(NL)
                         .append("iconst_1").append(NL)
-                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
-                temporaryVar += 2;
+                        .append("temp").append(temporaryLabel + 1).append(":").append(NL);
+                temporaryLabel += 2;
                 yield temp.toString();
             }
             case GTE -> {
                 var temp = new StringBuilder();
                 temp.append("isub").append(NL)
-                        .append("ifge temp").append(temporaryVar).append(NL)
+                        .append("ifge temp").append(temporaryLabel).append(NL)
                         .append("iconst_0").append(NL)
-                        .append("goto temp").append(temporaryVar + 1).append(NL)
-                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("goto temp").append(temporaryLabel + 1).append(NL)
+                        .append("temp").append(temporaryLabel).append(":").append(NL)
                         .append("iconst_1").append(NL)
-                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
-                temporaryVar += 2;
+                        .append("temp").append(temporaryLabel + 1).append(":").append(NL);
+                temporaryLabel += 2;
                 yield temp.toString();
             }
             case LTE -> {
                 var temp = new StringBuilder();
                 temp.append("isub").append(NL)
-                        .append("ifle temp").append(temporaryVar).append(NL)
+                        .append("ifle temp").append(temporaryLabel).append(NL)
                         .append("iconst_0").append(NL)
-                        .append("goto temp").append(temporaryVar + 1).append(NL)
-                        .append("temp").append(temporaryVar).append(":").append(NL)
+                        .append("goto temp").append(temporaryLabel + 1).append(NL)
+                        .append("temp").append(temporaryLabel).append(":").append(NL)
                         .append("iconst_1").append(NL)
-                        .append("temp").append(temporaryVar + 1).append(":").append(NL);
-                temporaryVar += 2;
+                        .append("temp").append(temporaryLabel + 1).append(":").append(NL);
+                temporaryLabel += 2;
                 yield temp.toString();
             }
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
@@ -551,6 +594,7 @@ public class JasminGenerator {
 
         if (returnInst.hasReturnValue()){
             code.append(generators.apply(returnInst.getOperand()));
+            loadsMax = Math.max(loadsMax, 1);
         } else {
             code.append("return").append(NL);
             return code.toString();

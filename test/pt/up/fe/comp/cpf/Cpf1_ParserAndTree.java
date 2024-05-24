@@ -23,6 +23,7 @@ import pt.up.fe.specs.util.SpecsStrings;
 public class Cpf1_ParserAndTree {
 
     static JasminResult getJmmResult(String filename) {
+        System.out.println("OLLIR CODE:\n" + TestUtils.optimize(SpecsIo.getResource("pt/up/fe/comp/cpf/1_parser_and_tree/" + filename)).getOllirCode() );
         return TestUtils.backend(SpecsIo.getResource("pt/up/fe/comp/cpf/1_parser_and_tree/" + filename));
     }
 
